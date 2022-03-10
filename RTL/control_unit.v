@@ -27,6 +27,7 @@ module control_unit(
    parameter [1:0] SUB_OPCODE     = 2'b01;
    parameter [1:0] R_TYPE_OPCODE  = 2'b10;
 
+
    //The behavior of the control unit can be found in Chapter 4, Figure 4.18
 
    always@(*)begin
@@ -41,10 +42,65 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = R_TYPE_OPCODE;
             jump      = 1'b0;
-         end
+	end
+	
+	ALU_I:begin
+            alu_src   = 1'b1;
+            mem_2_reg = 1'b0;
+            reg_write = 1'b1;
+            mem_read  = 1'b0;
+            mem_write = 1'b0;
+            branch    = 1'b0;
+            alu_op    = ADD_OPCODE;
+            jump      = 1'b0;	
+	end
+
+	BRANCH_EQ:begin
+            alu_src   = 1'b0;
+            mem_2_reg = 1'b0;
+            reg_write = 1'b0;
+            mem_read  = 1'b0;
+            mem_write = 1'b0;
+            branch    = 1'b1;
+            alu_op    = SUB_OPCODE;
+            jump      = 1'b0;
+	end
+
+	STORE:begin
+            alu_src   = 1'b1;
+            mem_2_reg = 1'b0;
+            reg_write = 1'b0;
+            mem_read  = 1'b0;
+            mem_write = 1'b1;
+            branch    = 1'b0;
+            alu_op    = ADD_OPCODE;
+            jump      = 1'b0;
+	end
+	
+	LOAD:begin
+            alu_src   = 1'b1;
+            mem_2_reg = 1'b1;
+            reg_write = 1'b1;
+            mem_read  = 1'b1;
+            mem_write = 1'b0;
+            branch    = 1'b0;
+            alu_op    = ADD_OPCODE;
+            jump      = 1'b0;
+	end
+	
+	JUMP:begin
+            alu_src   = 1'b0;
+            mem_2_reg = 1'b0;
+            reg_write = 1'b0;
+            mem_read  = 1'b0;
+            mem_write = 1'b0;
+            branch    = 1'b0;
+            alu_op    = ADD_OPCODE;
+            jump      = 1'b1;
+	end
+	
          
          // Declare the control signals for each one of the instructions here...
-
          default:begin
             alu_src   = 1'b0;
             mem_2_reg = 1'b0;
