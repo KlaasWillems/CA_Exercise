@@ -43,15 +43,15 @@ wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_PC, EX_PC, MEM_bra
 wire [      31:0] instruction, ID_INST;
 wire [       1:0] ID_AluOp;
 wire [       3:0] alu_control;
-
+wire [4:0] Rs1, Rs2; 
 wire              reg_dst,ID_Branch,ID_MemRead,ID_mem_2_reg,
                   ID_memwrite,ID_alusrc, ID_regwrite, ID_jump,
 			EX_regwrite, EX_mem_2_reg,
 			EX_Branch, EX_MemRead, EX_memwrite, EX_AluOp, EX_alusrc;
-
+wire [1:0] forwardingControlA, forwardingControlB; 
 wire [       4:0] regfile_waddr, EX_wb_reg, MEM_wb_reg, WB_wb_reg;
 wire [      63:0] regfile_wdata,mem_data, WB_mem_data, alu_out, MEM_alu_out, WB_alu_out,
-                  regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, EX_rd1, EX_immediate, alu_operand_2;
+                  regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, EX_rd1, EX_immediate, alu_operand_2, alu_temp, alu_operand_1;
 wire [1:0] EX_WB, MEM_WB, WB_WB;
 wire [3:0] EX_M, MEM_M;
 wire [2:0] EX_ex;
@@ -242,6 +242,26 @@ reg_arstn_en#(
       .dout  (EX_wb_reg)
    );
 
+reg_arstn_en#( // RF Address 1
+      .DATA_W(5)
+   ) ID_EX_FF99(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (ID_INST[19:15]),
+      .en    (enable    ),
+      .dout  (Rs1)
+   );
+
+
+reg_arstn_en#( // RF Address 2
+      .DATA_W(5)
+   ) ID_EX_FF98(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (ID_INST[24:20]),
+      .en    (enable    ),
+      .dout  (Rs2)
+   );
 // --------------------- EX Stage --------------
 
 alu_control alu_ctrl(
@@ -254,7 +274,7 @@ alu_control alu_ctrl(
 alu#(
    .DATA_W(64)
 ) alu(
-   .alu_in_0 (EX_rd1 ),
+   .alu_in_0 (alu_operand_1 ),
    .alu_in_1 (alu_operand_2   ),
    .alu_ctrl (alu_control     ),
    .alu_out  (alu_out         ),
@@ -275,9 +295,41 @@ mux_2 #(
    .DATA_W(64)
 ) alu_operand_mux (
    .input_a (EX_immediate),
-   .input_b (EX_rd2    ),
-   .select_a(EX_ex[0]           ),
-   .mux_out (alu_operand_2     )
+   .input_b (EX_rd2),
+   .select_a(EX_ex[0]),
+   .mux_out (alu_temp)
+);
+
+mux_3 #( // operand 1
+	.DATA_W(64)
+) forwardingMux1 (
+   .input_a (EX_rd1),
+   .input_b (MEM_alu_out),
+   .input_c (regfile_wdata),
+   .select_a(forwardingControlA),
+   .mux_out (alu_operand_1)
+);
+
+mux_3 #( // operand 2
+	.DATA_W(64)
+) forwardingMux2 (
+   .input_a (alu_temp),
+   .input_b (MEM_alu_out),
+   .input_c (regfile_wdata),
+   .select_a(forwardingControlB),
+   .mux_out (alu_operand_2)
+);
+
+forwardingUnit #(.AddressSize(5))
+forwardingUnit1 (
+	.Rs1(Rs1),
+	.Rs2(Rs2),
+	.MemRegisterRd(MEM_wb_reg),
+	.WBRegisterRd(WB_wb_reg),
+	.regWriteWB(MEM_WB[1]),
+	.regWriteMem(WB_WB[1]),
+	.ControlA(forwardingControlA),
+	.ControlB(forwardingControlB)
 );
 
 reg_arstn_en#(
@@ -355,7 +407,7 @@ reg_arstn_en#(
    ) EX_MEM_FF8(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   ( EX_wb_reg),
+      .din   (EX_wb_reg),
       .en    (enable    ),
       .dout  (MEM_wb_reg)
    );
@@ -416,7 +468,7 @@ reg_arstn_en#(
    ) MEM_WB_FF4(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   ( MEM_wb_reg),
+      .din   (MEM_wb_reg),
       .en    (enable    ),
       .dout  (WB_wb_reg)
    );
