@@ -37,7 +37,7 @@ module cpu(
 		output wire	[63:0]  rdata_ext_2
 
    );
-
+wire hazardBoolean;
 wire              EX_zero_flag, MEM_zero_flag;
 wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_PC, EX_PC, MEM_branch_pc, MEM_jump_pc;
 wire [      31:0] instruction, ID_INST;
@@ -61,8 +61,9 @@ wire [1:0] ID_WB = {ID_regwrite, ID_mem_2_reg}; // wire [1:0] EX_WB = {EX_regwri
 wire [3:0] ID_M = {ID_jump, ID_Branch, ID_MemRead, ID_memwrite}; // wire [2:0] EX_M = {EX_Branch, EX_MemRead, EX_memwrite};
 wire [2:0] ID_ex = {ID_AluOp, ID_alusrc}; // wire [2:0] EX_ex = {EX_AluOp, EX_alusrc};
 wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
-
+wire hazardEnable;
 // --------------------- IF Stage --------------
+assign hazardEnable = enable & !hazardBoolean;
 pc #(
    .DATA_W(64)
 ) program_counter (
@@ -74,7 +75,7 @@ pc #(
    .branch    (MEM_M[2]    ),
    .jump      (MEM_M[3]      ),
    .current_pc(IF_PC),
-   .enable    (enable    ),
+   .enable    (hazardEnable),
    .updated_pc(updated_pc)
 );
 
@@ -104,7 +105,7 @@ reg_arstn_en#(
       .clk   (clk       ),
       .arst_n(arst_n    ),
       .din   (updated_pc   ),
-      .en    (enable    ),
+      .en    (hazardEnable    ),
       .dout  (ID_PC)
    );
 reg_arstn_en#(
@@ -113,12 +114,20 @@ reg_arstn_en#(
       .clk   (clk       ),
       .arst_n(arst_n    ),
       .din   (instruction   ),
-      .en    (enable    ),
+      .en    (hazardEnable),
       .dout  (ID_INST)
    );
 
 
 // --------------------- ID Stage --------------
+
+hazardDetection(
+	.MemRead(EX_M[1]),
+	.Rd(EX_wb_reg),
+	.Rs1(ID_INST[19:15]),
+	.Rs2(ID_INST[24:20]),
+	.hazard(hazardBoolean)
+);
 
 control_unit control_unit(
    .opcode   (ID_INST[6:0]),
