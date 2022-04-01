@@ -11,7 +11,9 @@ module control_unit(
       output reg        mem_write,
       output reg        alu_src,
       output reg        reg_write,
-      output reg        jump
+      output reg        jump,
+      output reg 	flush,
+      input wire regEqual
    );
 
    // RISC-V opcode[6:0] (see RISC-V greensheet)
@@ -42,6 +44,7 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = R_TYPE_OPCODE;
             jump      = 1'b0;
+	    flush     = 1'b0;
 	end
 	
 	ALU_I:begin
@@ -53,17 +56,31 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = ADD_OPCODE;
             jump      = 1'b0;	
+	    flush     = 1'b0;
 	end
 
 	BRANCH_EQ:begin
-            alu_src   = 1'b0;
-            mem_2_reg = 1'b0;
-            reg_write = 1'b0;
-            mem_read  = 1'b0;
-            mem_write = 1'b0;
-            branch    = 1'b1;
-            alu_op    = SUB_OPCODE;
-            jump      = 1'b0;
+		if (regEqual == 1'b1) begin
+	            alu_src   = 1'b0;
+		    mem_2_reg = 1'b0;
+		    reg_write = 1'b0;
+		    mem_read  = 1'b0;
+		    mem_write = 1'b0;
+		    branch    = 1'b1;
+		    alu_op    = SUB_OPCODE;
+		    jump      = 1'b0;
+	    	    flush     = 1'b1;
+		end else begin
+	            alu_src   = 1'b0;
+		    mem_2_reg = 1'b0;
+		    reg_write = 1'b0;
+		    mem_read  = 1'b0;
+		    mem_write = 1'b0;
+		    branch    = 1'b0;
+		    alu_op    = SUB_OPCODE;
+		    jump      = 1'b0;
+	    	    flush     = 1'b0;
+		end
 	end
 
 	STORE:begin
@@ -75,6 +92,7 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = ADD_OPCODE;
             jump      = 1'b0;
+	    flush     = 1'b0;
 	end
 	
 	LOAD:begin
@@ -86,19 +104,32 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = ADD_OPCODE;
             jump      = 1'b0;
+	    flush     = 1'b0;
 	end
 	
 	JUMP:begin
-            alu_src   = 1'b0;
-            mem_2_reg = 1'b0;
-            reg_write = 1'b0;
-            mem_read  = 1'b0;
-            mem_write = 1'b0;
-            branch    = 1'b0;
-            alu_op    = ADD_OPCODE;
-            jump      = 1'b1;
+		if (regEqual == 1'b1) begin
+			alu_src   = 1'b0;
+			mem_2_reg = 1'b0;
+			reg_write = 1'b0;
+			mem_read  = 1'b0;
+			mem_write = 1'b0;
+			branch    = 1'b0;
+			alu_op    = ADD_OPCODE;
+			jump      = 1'b1;
+			flush     = 1'b1;
+		end else begin
+			alu_src   = 1'b0;
+			mem_2_reg = 1'b0;
+			reg_write = 1'b0;
+			mem_read  = 1'b0;
+			mem_write = 1'b0;
+			branch    = 1'b0;
+			alu_op    = ADD_OPCODE;
+			jump      = 1'b0;
+			flush     = 1'b0;
+		end
 	end
-	
          
          // Declare the control signals for each one of the instructions here...
          default:begin
@@ -110,6 +141,7 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = R_TYPE_OPCODE;
             jump      = 1'b0;
+	    flush     = 1'b0;
          end
       endcase
    end

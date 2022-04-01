@@ -17,4 +17,5 @@ set verilog_files { \
    mux_3
    hazardDetection
    forwardingUnit
+   reg_arstn_en_with_reset
 }

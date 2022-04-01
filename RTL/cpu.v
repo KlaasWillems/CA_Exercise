@@ -37,9 +37,12 @@ module cpu(
 		output wire	[63:0]  rdata_ext_2
 
    );
-wire hazardBoolean;
+parameter [1:0] twoBitZero = 2'b00;
+parameter [3:0] fourBitZero = 4'b0000;
+parameter [2:0] threeBitZero = 3'b000;
+wire hazardBoolean, flush;
 wire              EX_zero_flag, MEM_zero_flag;
-wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_PC, EX_PC, MEM_branch_pc, MEM_jump_pc;
+wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_PC,ID_Branch_PC, ID_Jump_PC;
 wire [      31:0] instruction, ID_INST;
 wire [       1:0] ID_AluOp;
 wire [       3:0] alu_control;
@@ -52,9 +55,9 @@ wire [1:0] forwardingControlA, forwardingControlB;
 wire [       4:0] regfile_waddr, EX_wb_reg, MEM_wb_reg, WB_wb_reg;
 wire [      63:0] regfile_wdata,mem_data, WB_mem_data, alu_out, MEM_alu_out, WB_alu_out,
                   regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, EX_rd1, EX_immediate, alu_operand_2, alu_temp, alu_operand_1;
-wire [1:0] EX_WB, MEM_WB, WB_WB;
-wire [3:0] EX_M, MEM_M;
-wire [2:0] EX_ex;
+wire [1:0] EX_WB, MEM_WB, WB_WB, ID_WB1;
+wire [3:0] EX_M, MEM_M, ID_M1;
+wire [2:0] EX_ex, ID_ex1;
 wire [9:0] EX_func73;
 wire signed [63:0] immediate_extended;
 wire [1:0] ID_WB = {ID_regwrite, ID_mem_2_reg}; // wire [1:0] EX_WB = {EX_regwrite, EX_mem_2_reg};
@@ -62,18 +65,21 @@ wire [3:0] ID_M = {ID_jump, ID_Branch, ID_MemRead, ID_memwrite}; // wire [2:0] E
 wire [2:0] ID_ex = {ID_AluOp, ID_alusrc}; // wire [2:0] EX_ex = {EX_AluOp, EX_alusrc};
 wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
 wire hazardEnable;
+wire regEqual;
 // --------------------- IF Stage --------------
 assign hazardEnable = enable & !hazardBoolean;
+assign regEqual = regfile_rdata_1 == regfile_rdata_2;
+
 pc #(
    .DATA_W(64)
 ) program_counter (
    .clk       (clk       ),
    .arst_n    (arst_n    ),
-   .branch_pc (MEM_branch_pc ),
-   .jump_pc   (MEM_jump_pc   ),
-   .zero_flag (MEM_zero_flag ),
-   .branch    (MEM_M[2]    ),
-   .jump      (MEM_M[3]      ),
+   .branch_pc (ID_Branch_PC),
+   .jump_pc   (ID_Jump_PC),
+   .zero_flag (flush),
+   .branch    (ID_Branch),
+   .jump      (ID_jump),
    .current_pc(IF_PC),
    .enable    (hazardEnable),
    .updated_pc(updated_pc)
@@ -108,10 +114,11 @@ reg_arstn_en#(
       .en    (hazardEnable    ),
       .dout  (ID_PC)
    );
-reg_arstn_en#(
+reg_arstn_en_with_reset#(
       .DATA_W(32)
    ) IF_ID_FF2(
       .clk   (clk       ),
+      .reset (flush),
       .arst_n(arst_n    ),
       .din   (instruction   ),
       .en    (hazardEnable),
@@ -121,7 +128,7 @@ reg_arstn_en#(
 
 // --------------------- ID Stage --------------
 
-hazardDetection(
+hazardDetection hazardDetectionModule(
 	.MemRead(EX_M[1]),
 	.Rd(EX_wb_reg),
 	.Rs1(ID_INST[19:15]),
@@ -139,7 +146,18 @@ control_unit control_unit(
    .mem_write(ID_memwrite       ),
    .alu_src  (ID_alusrc         ),
    .reg_write(ID_regwrite       ),
-   .jump     (ID_jump            )
+   .jump     (ID_jump            ),
+   .flush    (flush), 
+   .regEqual (regEqual)
+);
+
+branch_unit#(
+   .DATA_W(64)
+)branch_unit(
+   .updated_pc         (ID_PC),
+   .immediate_extended (immediate_extended),
+   .branch_pc          (ID_Branch_PC),
+   .jump_pc            (ID_Jump_PC)
 );
 
 register_file #(
@@ -161,44 +179,61 @@ immediate_extend_unit immediate_extend_u(
     .immediate_extended  (immediate_extended)
 );
 
+mux_2 #(
+   .DATA_W(2)
+) hazardMux1 (
+   .input_a (twoBitZero),
+   .input_b (ID_WB),
+   .select_a(hazardBoolean),
+   .mux_out (ID_WB1)
+);
+
 reg_arstn_en#(
       .DATA_W(2)
    ) ID_EX_FF1(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (ID_WB),
+      .din   (ID_WB1),
       .en    (enable    ),
       .dout  (EX_WB)
    );
+
+mux_2 #(
+   .DATA_W(4)
+) hazardMux2 (
+   .input_a (fourBitZero),
+   .input_b (ID_M),
+   .select_a(hazardBoolean),
+   .mux_out (ID_M1)
+);
 
 reg_arstn_en#(
       .DATA_W(4)
    ) ID_EX_FF2(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (ID_M),
+      .din   (ID_M1),
       .en    (enable    ),
       .dout  (EX_M)
    );
+
+mux_2 #(
+   .DATA_W(3)
+) hazardMux3 (
+   .input_a (threeBitZero),
+   .input_b (ID_ex),
+   .select_a(hazardBoolean),
+   .mux_out (ID_ex1)
+);
 
 reg_arstn_en#(
       .DATA_W(3)
    ) ID_EX_FF3(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (ID_ex),
+      .din   (ID_ex1),
       .en    (enable    ),
       .dout  (EX_ex)
-   );
-
-reg_arstn_en#(
-      .DATA_W(64)
-   ) ID_EX_FF4(
-      .clk   (clk       ),
-      .arst_n(arst_n    ),
-      .din   (ID_PC   ),
-      .en    (enable    ),
-      .dout  (EX_PC)
    );
 
 reg_arstn_en#(
@@ -283,21 +318,12 @@ alu_control alu_ctrl(
 alu#(
    .DATA_W(64)
 ) alu(
-   .alu_in_0 (alu_operand_1 ),
-   .alu_in_1 (alu_operand_2   ),
-   .alu_ctrl (alu_control     ),
+   .alu_in_0 (alu_operand_1),
+   .alu_in_1 (alu_operand_2),
+   .alu_ctrl (alu_control),
    .alu_out  (alu_out         ),
    .zero_flag(EX_zero_flag       ),
    .overflow (                )
-);
-
-branch_unit#(
-   .DATA_W(64)
-)branch_unit(
-   .updated_pc         (EX_PC        ),
-   .immediate_extended (EX_immediate),
-   .branch_pc          (EX_branch_pc         ),
-   .jump_pc            (EX_jump_pc           )
 );
 
 mux_2 #(
@@ -335,8 +361,8 @@ forwardingUnit1 (
 	.Rs2(Rs2),
 	.MemRegisterRd(MEM_wb_reg),
 	.WBRegisterRd(WB_wb_reg),
-	.regWriteWB(MEM_WB[1]),
-	.regWriteMem(WB_WB[1]),
+	.regWriteWB(WB_WB[1]),
+	.regWriteMem(MEM_WB[1]),
 	.ControlA(forwardingControlA),
 	.ControlB(forwardingControlB)
 );
@@ -361,25 +387,6 @@ reg_arstn_en#(
       .dout  (MEM_M)
    );
 
-reg_arstn_en#(
-      .DATA_W(64)
-   ) EX_MEM_FF3(
-      .clk   (clk       ),
-      .arst_n(arst_n    ),
-      .din   (EX_branch_pc),
-      .en    (enable    ),
-      .dout  (MEM_branch_pc)
-   );
-
-reg_arstn_en#(
-      .DATA_W(64)
-   ) EX_MEM_FF4(
-      .clk   (clk       ),
-      .arst_n(arst_n    ),
-      .din   (EX_jump_pc),
-      .en    (enable    ),
-      .dout  (MEM_jump_pc)
-   );
 
 reg_arstn_en#(
       .DATA_W(1)

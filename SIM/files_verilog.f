@@ -14,4 +14,5 @@
 ../RTL/saed32sram_mod.v
 ../RTL/mux_3.v
 ../RTL/forwardingUnit.v
-../RTL/harzardDetection.v
+../RTL/hazardDetection.v
+../RTL/reg_arstn_en_with_reset.v
