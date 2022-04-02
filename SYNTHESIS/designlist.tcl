@@ -2,6 +2,7 @@
 
 # define design files: */
 set verilog_files { \
+   branchPredictionTable
    alu
    alu_control
    branch_unit

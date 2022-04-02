@@ -26,8 +26,6 @@ module register_file#(
    );
 
    parameter integer N_REG      = 32;
-
-   
    
    reg [DATA_W-1:0] reg_array     [0:N_REG-1];
    reg [DATA_W-1:0] reg_array_nxt [0:N_REG-1];

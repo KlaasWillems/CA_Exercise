@@ -3,6 +3,7 @@
 
 module control_unit(
       input  wire [6:0] opcode,
+      input  wire branchTaken,
       output reg  [1:0] alu_op,
       output reg        reg_dst,
       output reg        branch,
@@ -60,26 +61,26 @@ module control_unit(
 	end
 
 	BRANCH_EQ:begin
-		if (regEqual == 1'b1) begin
-	            alu_src   = 1'b0;
-		    mem_2_reg = 1'b0;
-		    reg_write = 1'b0;
-		    mem_read  = 1'b0;
-		    mem_write = 1'b0;
-		    branch    = 1'b1;
-		    alu_op    = SUB_OPCODE;
-		    jump      = 1'b0;
-	    	    flush     = 1'b1;
+		if (regEqual != branchTaken) begin // flush if prediction was wrong
+         alu_src   = 1'b0;
+         mem_2_reg = 1'b0;
+         reg_write = 1'b0;
+         mem_read  = 1'b0;
+         mem_write = 1'b0;
+         branch    = 1'b1;
+         alu_op    = SUB_OPCODE;
+         jump      = 1'b0;
+         flush     = 1'b1;
 		end else begin
-	            alu_src   = 1'b0;
-		    mem_2_reg = 1'b0;
-		    reg_write = 1'b0;
-		    mem_read  = 1'b0;
-		    mem_write = 1'b0;
-		    branch    = 1'b0;
-		    alu_op    = SUB_OPCODE;
-		    jump      = 1'b0;
-	    	    flush     = 1'b0;
+         alu_src   = 1'b0;
+         mem_2_reg = 1'b0;
+         reg_write = 1'b0;
+         mem_read  = 1'b0;
+         mem_write = 1'b0;
+         branch    = 1'b0;
+         alu_op    = SUB_OPCODE;
+         jump      = 1'b0;
+         flush     = 1'b0;
 		end
 	end
 
@@ -117,7 +118,7 @@ module control_unit(
 			branch    = 1'b0;
 			alu_op    = ADD_OPCODE;
 			jump      = 1'b1;
-			flush     = 1'b1;
+			flush     = 1'b1; // Always flush with jump instruction
 		end else begin
 			alu_src   = 1'b0;
 			mem_2_reg = 1'b0;

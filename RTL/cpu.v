@@ -28,16 +28,20 @@ module cpu(
 		input  wire	[63:0]  addr_ext,
 		input  wire         wen_ext,
 		input  wire         ren_ext,
-		input  wire [31:0]  wdata_ext,
+		input  wire  wdata_ext,
 		input  wire	[63:0]  addr_ext_2,
 		input  wire         wen_ext_2,
 		input  wire         ren_ext_2,
 		input  wire [63:0]  wdata_ext_2,
 		
-		output wire	[31:0]  rdata_ext,
+		output wire	 rdata_ext,
 		output wire	[63:0]  rdata_ext_2
 
    );
+// branch prediction signals
+wire IF_branchPredictionBoolean, ID_branchPredictionBoolean;
+wire [31:0] predictionPC;
+
 parameter [1:0] twoBitZero = 2'b00;
 parameter [3:0] fourBitZero = 4'b0000;
 parameter [2:0] threeBitZero = 3'b000;
@@ -71,6 +75,18 @@ wire regEqual;
 assign hazardEnable = enable & !hazardBoolean;
 assign regEqual = regfile_rdata_1 == regfile_rdata_2;
 
+branchPredictionTable BPT1(
+    .clk(clk),
+    .arst_n(arst_n),
+    .IF_PC(IF_PC),
+    .ID_PC(ID_PC),
+    .branchPC(ID_Branch_PC),
+    .zero_flag(flush), 
+    .ID_INST(ID_INST),
+    .predictedBranchPC(predictionPC),
+    .branchTaken(IF_branchPredictionBoolean)
+    );
+
 pc #(
    .DATA_W(64)
 ) program_counter (
@@ -83,7 +99,9 @@ pc #(
    .jump      (ID_jump),
    .current_pc(IF_PC),
    .enable    (hazardEnable),
-   .updated_pc(updated_pc)
+   .updated_pc(updated_pc),
+   .branchTaken (IF_branchPredictionBoolean),
+   .predictionPC (predictionPC)
 );
 
 // The instruction memory.
@@ -125,6 +143,18 @@ reg_arstn_en_with_reset#(
       .en    (hazardEnable),
       .dout  (ID_INST)
    );
+reg_arstn_en_with_reset#(
+      .DATA_W(1)
+   ) IF_ID_FF3(
+      .clk   (clk),
+      .reset (flush),
+      .arst_n(arst_n),
+      .din   (IF_branchPredictionBoolean),
+      .en    (hazardEnable),
+      .dout  (ID_branchPredictionBoolean)
+   );
+
+
 
 
 // --------------------- ID Stage --------------
@@ -139,6 +169,7 @@ hazardDetection hazardDetectionModule(
 
 control_unit control_unit(
    .opcode   (ID_INST[6:0]),
+   .branchTaken (ID_branchPredictionBoolean),
    .alu_op   (ID_AluOp          ),
    .reg_dst  (reg_dst         ),
    .branch   (ID_Branch          ),
