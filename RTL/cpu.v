@@ -28,19 +28,19 @@ module cpu(
 		input  wire	[63:0]  addr_ext,
 		input  wire         wen_ext,
 		input  wire         ren_ext,
-		input  wire  wdata_ext,
+		input  wire  [31:0] wdata_ext,
 		input  wire	[63:0]  addr_ext_2,
 		input  wire         wen_ext_2,
 		input  wire         ren_ext_2,
 		input  wire [63:0]  wdata_ext_2,
 		
-		output wire	 rdata_ext,
+		output wire [31:0] rdata_ext,
 		output wire	[63:0]  rdata_ext_2
 
    );
 // branch prediction signals
 wire IF_branchPredictionBoolean, ID_branchPredictionBoolean;
-wire [31:0] predictionPC;
+wire [63:0] predictionPC;
 
 parameter [1:0] twoBitZero = 2'b00;
 parameter [3:0] fourBitZero = 4'b0000;
@@ -79,7 +79,6 @@ branchPredictionTable BPT1(
     .clk(clk),
     .arst_n(arst_n),
     .IF_PC(IF_PC),
-    .ID_PC(ID_PC),
     .branchPC(ID_Branch_PC),
     .zero_flag(flush), 
     .ID_INST(ID_INST),

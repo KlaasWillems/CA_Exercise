@@ -1,12 +1,11 @@
 module branchPredictionTable(
     input wire clk,
     input wire arst_n,
-    input wire [31:0] IF_PC,
-    input wire [31:0] ID_PC,
-    input wire [31:0] branchPC,
+    input wire [63:0] IF_PC,
+    input wire [63:0] branchPC,
     input wire zero_flag, // rs1 == rs2
     input wire [31:0] ID_INST,
-    output reg [31:0] predictedBranchPC,
+    output reg [63:0] predictedBranchPC,
     output reg branchTaken
     );
 
@@ -14,18 +13,20 @@ parameter integer N_REG = 4;
 parameter integer N_BITS = $clog2(N_REG);
 parameter integer BRANCH_EQ  = 7'b1100011;
 
-reg [31:0] BranchPCTable [0:N_REG-1]; // Contains the PC of the branches
+integer idx;
+
+reg [63:0] BranchPCTable [0:N_REG-1]; // Contains the PC of the branches
 reg [1:0] BPT [0:N_REG-1]; // Contains the predictions
 reg [0:N_REG-1] validTable; // Contains the valid bits
 
 wire [N_BITS-1:0] BPTAddress;
-assign BPTAddress = IP_PC[N_BITS-1:0];
+assign BPTAddress = IF_PC[2*N_BITS-1:N_BITS];
 
 // output procesess
 assign predictedBranchPC = BranchPCTable[BPTAddress];
 
 always @(*) begin
-    case(BPT):
+    case(BPT[BPTAddress])
         2'b00: branchTaken = 1'b0;
         2'b01: branchTaken = 1'b0;
         2'b10: branchTaken = 1'b1 & validTable[BPTAddress]; // If unvalid address (eg. at startup): do not take branch
