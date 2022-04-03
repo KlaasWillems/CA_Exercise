@@ -361,7 +361,7 @@ mux_2 #(
    .DATA_W(64)
 ) alu_operand_mux (
    .input_a (EX_immediate),
-   .input_b (EX_rd2),
+   .input_b (alu_operand_2),
    .select_a(EX_ex[0]),
    .mux_out (alu_temp)
 );
@@ -379,11 +379,11 @@ mux_3 #( // operand 1
 mux_3 #( // operand 2
 	.DATA_W(64)
 ) forwardingMux2 (
-   .input_a (alu_temp),
+   .input_a (EX_rd2),
    .input_b (MEM_alu_out),
    .input_c (regfile_wdata),
    .select_a(forwardingControlB),
-   .mux_out (alu_operand_2)
+   .mux_out (alu_temp)
 );
 
 forwardingUnit #(.AddressSize(5))
