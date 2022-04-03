@@ -8,36 +8,37 @@ addi x23, x0, 0 # B loop index starts with 0
 addi x7, x0, 0 # accumation result initilization
 B_CHECK: beq x23, x13, B_END
 K_CHECK: beq x22, x12, K_END
-ld x4, 0(x25) # copy1
-ld x5, 0(x26) 
-addi x25, x25, 8 
-mul x6, x4, x5 
-add x7, x7, x6 
-addi x26, x26, 8 
-ld x4, 0(x25) # copy2
-ld x5, 0(x26) 
-addi x25, x25, 8 
-mul x6, x4, x5  
-add x7, x7, x6  
-addi x26, x26, 8 
-ld x4, 0(x25) # copy3
-ld x5, 0(x26) 
-addi x25, x25, 8 
-mul x6, x4, x5  
-add x7, x7, x6  
-addi x26, x26, 8 
-ld x4, 0(x25) # copy4
-ld x5, 0(x26) 
-addi x25, x25, 8 
-mul x6, x4, x5  
-add x7, x7, x6 
-addi x26, x26, 8 
-ld x4, 0(x25) # copy5
-ld x5, 0(x26) 
-addi x25, x25, 8 
-mul x6, x4, x5  
-add x7, x7, x6  
-addi x26, x26, 8 
+ld x4, 0(x25) # load 1 input data
+ld x5, 0(x26) # load 1 weight data
+addi x25, x25, 8 # input's 64-bit word address + 1
+mul x6, x4, x5 # multiply the input with the weight
+add x7, x7, x6 # accumulate the result
+addi x26, x26, 8 # weight's 64-bit word address +1
+ld x4, 0(x25) # load 1 input data
+ld x5, 0(x26) # load 1 weight data
+addi x25, x25, 8 # input's 64-bit word address + 1
+mul x6, x4, x5 # multiply the input with the weight
+add x7, x7, x6 # accumulate the result
+addi x26, x26, 8 # weight's 64-bit word address +1
+ld x4, 0(x25) # load 1 input data
+ld x5, 0(x26) # load 1 weight data
+addi x25, x25, 8 # input's 64-bit word address + 1
+mul x6, x4, x5 # multiply the input with the weight
+add x7, x7, x6 # accumulate the result
+addi x26, x26, 8 # weight's 64-bit word address +1
+ld x4, 0(x25) # load 1 input data
+ld x5, 0(x26) # load 1 weight data
+addi x25, x25, 8 # input's 64-bit word address + 1
+mul x6, x4, x5 # multiply the input with the weight
+add x7, x7, x6 # accumulate the result
+addi x26, x26, 8 # weight's 64-bit word address +1
+ld x4, 0(x25) # load 1 input data
+ld x5, 0(x26) # load 1 weight data
+addi x25, x25, 8 # input's 64-bit word address + 1
+mul x6, x4, x5 # multiply the input with the weight
+add x7, x7, x6 # accumulate the result
+addi x26, x26, 8 # weight's 64-bit word address +1
+addi x0, x0, 0 # nop to avoid 'add x7, x7, x6' and 'sd x7, 0(x27)' hazard still ne
 sd x7, 0(x27) # store the output data
 addi x7, x0, 0 # accumation result reset to 0
 addi x22, x22, 1 # K loop index +1
