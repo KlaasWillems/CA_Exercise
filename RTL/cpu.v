@@ -444,7 +444,7 @@ reg_arstn_en#(
    ) EX_MEM_FF7(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (  EX_rd2 ),
+      .din   (alu_temp),
       .en    (enable    ),
       .dout  (MEM_rd2)
    );
