@@ -361,9 +361,9 @@ mux_2 #(
    .DATA_W(64)
 ) alu_operand_mux (
    .input_a (EX_immediate),
-   .input_b (alu_operand_2),
+   .input_b (alu_temp),
    .select_a(EX_ex[0]),
-   .mux_out (alu_temp)
+   .mux_out (alu_operand_2)
 );
 
 mux_3 #( // operand 1
