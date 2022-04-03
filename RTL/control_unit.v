@@ -109,7 +109,6 @@ module control_unit(
 	end
 	
 	JUMP:begin
-		if (regEqual == 1'b1) begin
 			alu_src   = 1'b0;
 			mem_2_reg = 1'b0;
 			reg_write = 1'b0;
@@ -119,17 +118,6 @@ module control_unit(
 			alu_op    = ADD_OPCODE;
 			jump      = 1'b1;
 			flush     = 1'b1; // Always flush with jump instruction
-		end else begin
-			alu_src   = 1'b0;
-			mem_2_reg = 1'b0;
-			reg_write = 1'b0;
-			mem_read  = 1'b0;
-			mem_write = 1'b0;
-			branch    = 1'b0;
-			alu_op    = ADD_OPCODE;
-			jump      = 1'b0;
-			flush     = 1'b0;
-		end
 	end
          
          // Declare the control signals for each one of the instructions here...
