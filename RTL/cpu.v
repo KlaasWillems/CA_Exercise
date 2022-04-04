@@ -56,7 +56,7 @@ wire              reg_dst,ID_Branch,ID_MemRead,ID_mem_2_reg,
                   ID_memwrite,ID_alusrc, ID_regwrite, ID_jump,
 			EX_regwrite, EX_mem_2_reg,
 			EX_Branch, EX_MemRead, EX_memwrite, EX_AluOp, EX_alusrc;
-wire [1:0] forwardingControlA, forwardingControlB
+wire [1:0] forwardingControlA, forwardingControlB;
 wire forwardingControlC, forwardingControlD; 
 wire [       4:0] regfile_waddr, EX_wb_reg, MEM_wb_reg, WB_wb_reg;
 wire [      63:0] regfile_wdata,mem_data, WB_mem_data, alu_out, MEM_alu_out, WB_alu_out,
