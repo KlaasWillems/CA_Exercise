@@ -5,7 +5,7 @@ module branchPredictionTable(
     input wire [63:0] branchPC,
     input wire zero_flag, // rs1 == rs2
     input wire [31:0] ID_INST,
-    output reg [63:0] predictedBranchPC,
+    output wire [63:0] predictedBranchPC,
     output reg branchTaken
     );
 
