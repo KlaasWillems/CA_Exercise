@@ -41,22 +41,23 @@ module cpu(
 // branch prediction signals
 wire IF_branchPredictionBoolean, ID_branchPredictionBoolean;
 wire [63:0] predictionPC;
-
+wire [63:0] ID_operand1, ID_operand2;
 parameter [1:0] twoBitZero = 2'b00;
 parameter [3:0] fourBitZero = 4'b0000;
 parameter [2:0] threeBitZero = 3'b000;
 wire hazardBoolean, flush;
 wire              EX_zero_flag, MEM_zero_flag;
-wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_PC,ID_Branch_PC, ID_Jump_PC;
+wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_updated_PC,ID_Branch_PC, ID_Jump_PC;
 wire [      31:0] instruction, ID_INST;
 wire [       1:0] ID_AluOp;
 wire [       3:0] alu_control;
-wire [4:0] Rs1, Rs2; 
+wire [4:0] EXRs1, EXRs2, IDRs1, IDRs2; 
 wire              reg_dst,ID_Branch,ID_MemRead,ID_mem_2_reg,
                   ID_memwrite,ID_alusrc, ID_regwrite, ID_jump,
 			EX_regwrite, EX_mem_2_reg,
 			EX_Branch, EX_MemRead, EX_memwrite, EX_AluOp, EX_alusrc;
-wire [1:0] forwardingControlA, forwardingControlB; 
+wire [1:0] forwardingControlA, forwardingControlB
+wire forwardingControlC, forwardingControlD; 
 wire [       4:0] regfile_waddr, EX_wb_reg, MEM_wb_reg, WB_wb_reg;
 wire [      63:0] regfile_wdata,mem_data, WB_mem_data, alu_out, MEM_alu_out, WB_alu_out,
                   regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, EX_rd1, EX_immediate, alu_operand_2, alu_temp, alu_operand_1;
@@ -73,7 +74,26 @@ wire hazardEnable;
 wire regEqual;
 // --------------------- IF Stage --------------
 assign hazardEnable = enable & !hazardBoolean;
-assign regEqual = regfile_rdata_1 == regfile_rdata_2;
+
+assign regEqual = ID_operand1 == ID_operand2;
+
+mux_2 #( // operand 1
+	.DATA_W(64)
+) forwardingMux3 (
+   .input_a (MEM_alu_out),
+   .input_b (regfile_rdata_1),
+   .select_a(forwardingControlC),
+   .mux_out (ID_operand1)
+);
+
+mux_2 #( // operand 1
+	.DATA_W(64)
+) forwardingMux4 (
+   .input_a (MEM_alu_out),
+   .input_b (regfile_rdata_2),
+   .select_a(forwardingControlC),
+   .mux_out (ID_operand2)
+);
 
 branchPredictionTable BPT1(
     .clk(clk),
@@ -130,7 +150,7 @@ reg_arstn_en#(
       .arst_n(arst_n    ),
       .din   (updated_pc   ),
       .en    (hazardEnable    ),
-      .dout  (ID_PC)
+      .dout  (ID_updated_PC)
    );
 reg_arstn_en_with_reset#(
       .DATA_W(32)
@@ -152,9 +172,6 @@ reg_arstn_en_with_reset#(
       .en    (hazardEnable),
       .dout  (ID_branchPredictionBoolean)
    );
-
-
-
 
 // --------------------- ID Stage --------------
 
@@ -185,7 +202,7 @@ control_unit control_unit(
 branch_unit#(
    .DATA_W(64)
 )branch_unit(
-   .updated_pc         (ID_PC),
+   .updated_pc         (ID_updated_PC),
    .immediate_extended (immediate_extended),
    .branch_pc          (ID_Branch_PC),
    .jump_pc            (ID_Jump_PC)
@@ -324,7 +341,7 @@ reg_arstn_en#( // RF Address 1
       .arst_n(arst_n    ),
       .din   (ID_INST[19:15]),
       .en    (enable    ),
-      .dout  (Rs1)
+      .dout  (EXRs1)
    );
 
 
@@ -335,7 +352,7 @@ reg_arstn_en#( // RF Address 2
       .arst_n(arst_n    ),
       .din   (ID_INST[24:20]),
       .en    (enable    ),
-      .dout  (Rs2)
+      .dout  (EXRs2)
    );
 // --------------------- EX Stage --------------
 
@@ -388,14 +405,18 @@ mux_3 #( // operand 2
 
 forwardingUnit #(.AddressSize(5))
 forwardingUnit1 (
-	.Rs1(Rs1),
-	.Rs2(Rs2),
+   .IDRs1(IDRs1),
+   .IDRs2(IDRs2),
+	.EXRs1(EXRs1),
+	.EXRs2(EXRs2),
 	.MemRegisterRd(MEM_wb_reg),
 	.WBRegisterRd(WB_wb_reg),
 	.regWriteWB(WB_WB[1]),
 	.regWriteMem(MEM_WB[1]),
 	.ControlA(forwardingControlA),
-	.ControlB(forwardingControlB)
+	.ControlB(forwardingControlB),
+   .ControlC(forwardingControlC),
+   .ControlD(forwardingControlD)
 );
 
 reg_arstn_en#(
