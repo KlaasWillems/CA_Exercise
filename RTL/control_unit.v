@@ -130,7 +130,7 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = R_TYPE_OPCODE;
             jump      = 1'b0;
-	    flush     = 1'b0;
+            flush     = 1'b0;
          end
       endcase
    end

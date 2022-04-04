@@ -286,6 +286,18 @@ reg [63:0] result_mem_mult4 [0:46]; // data memory index: I-matrix 0-19; W-matri
 
 endtask
 
+task test_branchPrediction;
+   if(dut.register_file.reg_array[5] == 64'h6e)begin
+      $display("%c[1;34m",27);
+      $display("branchPrediction Working Correctly");
+      $display("%c[0m",27);
+   end else begin
+      $display("%c[1;31m",27);
+      $display("Error in branchPrediction function");
+      $display("%c[0m",27);
+      debug_regfile();
+   end   
+endtask
 
 task cnt_and_wait;
 input [31:0] stop_counter;
@@ -312,6 +324,7 @@ begin
       4'h2: test_mult_2();
       4'h3: test_mult_3();
       4'h4: test_mult_4();
+      4'h5: test_branchPrediction();
       default: $display("### undefined test ###");
    endcase
 
