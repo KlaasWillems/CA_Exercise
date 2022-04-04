@@ -51,7 +51,7 @@ wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_updated_PC,ID_Bran
 wire [      31:0] instruction, ID_INST;
 wire [       1:0] ID_AluOp;
 wire [       3:0] alu_control;
-wire [4:0] EXRs1, EXRs2, IDRs1, IDRs2; 
+wire [4:0] EXRs1, EXRs2; 
 wire              reg_dst,ID_Branch,ID_MemRead,ID_mem_2_reg,
                   ID_memwrite,ID_alusrc, ID_regwrite, ID_jump,
 			EX_regwrite, EX_mem_2_reg,
@@ -91,7 +91,7 @@ mux_2 #( // operand 1
 ) forwardingMux4 (
    .input_a (MEM_alu_out),
    .input_b (regfile_rdata_2),
-   .select_a(forwardingControlC),
+   .select_a(forwardingControlD),
    .mux_out (ID_operand2)
 );
 
@@ -405,8 +405,8 @@ mux_3 #( // operand 2
 
 forwardingUnit #(.AddressSize(5))
 forwardingUnit1 (
-   .IDRs1(IDRs1),
-   .IDRs2(IDRs2),
+   .IDRs1(ID_INST[19:15]),
+   .IDRs2(ID_INST[24:20]),
 	.EXRs1(EXRs1),
 	.EXRs2(EXRs2),
 	.MemRegisterRd(MEM_wb_reg),
