@@ -185,18 +185,19 @@ hazardDetection hazardDetectionModule(
 
 control_unit control_unit(
    .opcode   (ID_INST[6:0]),
+   .func3 (ID_INST[14:12]),
    .branchTaken (ID_branchPredictionBoolean),
-   .alu_op   (ID_AluOp          ),
-   .reg_dst  (reg_dst         ),
-   .branch   (ID_Branch          ),
-   .mem_read (ID_MemRead        ),
-   .mem_2_reg(ID_mem_2_reg       ),
-   .mem_write(ID_memwrite       ),
-   .alu_src  (ID_alusrc         ),
-   .reg_write(ID_regwrite       ),
-   .jump     (ID_jump            ),
-   .flush    (flush), 
    .regEqual (regEqual)
+   .alu_op   (ID_AluOp),
+   .reg_dst  (reg_dst),
+   .branch   (ID_Branch),
+   .mem_read (ID_MemRead),
+   .mem_2_reg(ID_mem_2_reg),
+   .mem_write(ID_memwrite),
+   .alu_src  (ID_alusrc),
+   .reg_write(ID_regwrite),
+   .jump     (ID_jump),
+   .flush    (flush)
 );
 
 branch_unit#(

@@ -2,19 +2,20 @@
 // Function: Generates the control signals for each one of the datapath resources
 
 module control_unit(
-      input  wire [6:0] opcode,
-      input  wire branchTaken,
-      output reg  [1:0] alu_op,
-      output reg        reg_dst,
-      output reg        branch,
-      output reg        mem_read,
-      output reg        mem_2_reg,
-      output reg        mem_write,
-      output reg        alu_src,
-      output reg        reg_write,
-      output reg        jump,
-      output reg 	      flush,
-      input wire        regEqual
+      input wire [6:0] opcode,
+      input wire [2:0] func3,
+      input wire branchTaken,
+      input wire regEqual
+      output reg [1:0] alu_op,
+      output reg reg_dst,
+      output reg branch,
+      output reg mem_read,
+      output reg mem_2_reg,
+      output reg mem_write,
+      output reg alu_src,
+      output reg reg_write,
+      output reg jump,
+      output reg flush,
    );
 
    // RISC-V opcode[6:0] (see RISC-V greensheet)
@@ -24,6 +25,8 @@ module control_unit(
    parameter integer JUMP       = 7'b1101111;
    parameter integer LOAD       = 7'b0000011;
    parameter integer STORE      = 7'b0100011;
+   parameter integer BEQ = 3'b000;
+   parameter integer BNE = 3'b001;
 
    // RISC-V ALUOp[1:0] (see book Figure 4.12)
    parameter [1:0] ADD_OPCODE     = 2'b00;
@@ -58,7 +61,7 @@ module control_unit(
 	end
 
 	BRANCH:begin
-		if (regEqual != branchTaken) begin // flush if prediction was wrong
+		if ((regEqual != branchTaken && func3 == BEQ) || (regEqual == branchTaken && func3 == BEN)) begin // flush if prediction was wrong
          alu_src   = 1'b0;
          mem_2_reg = 1'b0;
          reg_write = 1'b0;
