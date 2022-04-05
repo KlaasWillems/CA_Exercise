@@ -1,3 +1,5 @@
+
+
 //Branch Unit
 //Function: Calculate the next pc in the case of a control instruction (branch or jump).
 //Inputs:
@@ -22,15 +24,15 @@ module branch_unit#(
    parameter integer BEQ = 3'b000;
    parameter integer BNE = 3'b001;
    localparam  [DATA_W-1:0] PC_INCREASE= {{(DATA_W-3){1'b0}},3'd4};
-   wire shouldHaveTaken;
+   reg shouldHaveTaken;
 
    // Prediction: branch taken but should not have taken: branch_pc = updated_pc
    // Prediction: do not take but should have taken = branch_pc = updated_pc + immediate + pc_increase
    // If the prediction was incorrect we will take branch_pc in the next cycle
-   // If the prediction was correct the output doesn't matter
+   // If the prediction was correct, put the branch pc on the output so that the branch prediction hardware can store it for later
    
    always @(*) begin
-      if (func3 == BNE) begin
+      if (func3 == BEQ) begin
          shouldHaveTaken = regEqual;
       end else begin
          shouldHaveTaken = !regEqual;
@@ -38,12 +40,12 @@ module branch_unit#(
    end
 
    always@(*) begin
-      if (shouldHaveTaken == 1'b1 && branchPrediction == 1'0) begin
+      if (shouldHaveTaken == 1'b1 && branchPrediction == 1'b0) begin
          branch_pc = updated_pc + immediate_extended - PC_INCREASE; // Take the branch
       end else if (shouldHaveTaken == 1'b0 && branchPrediction == 1'b1) begin // 
          branch_pc = updated_pc; // go back!
       end else begin 
-         branch_pc = updated_pc; // prediction correct, output doesn't matter
+         branch_pc = updated_pc + immediate_extended - PC_INCREASE;
       end
    end
    
