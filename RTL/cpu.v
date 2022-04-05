@@ -204,6 +204,9 @@ branch_unit#(
 )branch_unit(
    .updated_pc         (ID_updated_PC),
    .immediate_extended (immediate_extended),
+   .func3              (ID_INST[14:12]),
+   .regEqual           (regEqual),
+   .branchPrediction   (ID_branchPredictionBoolean),
    .branch_pc          (ID_Branch_PC),
    .jump_pc            (ID_Jump_PC)
 );

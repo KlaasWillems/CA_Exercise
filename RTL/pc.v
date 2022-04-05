@@ -50,10 +50,10 @@ module pc#(
    mux_2#(
       .DATA_W(DATA_W)
    ) mux_branch( 
-      .input_a (branch_pc ),
+      .input_a (branch_pc),
       .input_b (next_pc_i1),
-      .select_a(branch    ),
-      .mux_out (next_pc_i )
+      .select_a(branch),
+      .mux_out (next_pc_i)
    );
    
    mux_2#(
