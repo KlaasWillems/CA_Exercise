@@ -99,7 +99,7 @@ branchPredictionTable BPT1(
     .arst_n(arst_n),
     .IF_PC(IF_PC),
     .branchPC(ID_Branch_PC),
-    .branched(notFlushed), 
+    .notFlushed(notFlushed), 
     .ID_INST(ID_INST),
     .predictedBranchPC(predictionPC),
     .branchTaken(IF_branchPredictionBoolean)
