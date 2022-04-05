@@ -17,26 +17,30 @@
 module pc#(
    parameter integer DATA_W = 16
    )(
-      input  wire              clk,
-      input  wire              arst_n,
-      input  wire              enable,
-      input  wire [DATA_W-1:0] branch_pc,
-      input  wire [DATA_W-1:0] jump_pc,  
-      input  wire              zero_flag,
-      input  wire              branch,
-      input  wire              jump,
-      input  wire              branchTaken,
-      input  wire [DATA_W-1:0] predictionPC,
+      input wire              clk,
+      input wire              arst_n,
+      input wire              enable,
+      input wire [DATA_W-1:0] branch_pc,
+      input wire [DATA_W-1:0] jump_pc,  
+      input wire              zero_flag,
+      input wire              branch,
+      input wire              jump,
+      input wire              branchTaken,
+      input wire [DATA_W-1:0] predictionPC,
+      input wire [6:0]       IF_INST_OPCODE, 
       output reg  [DATA_W-1:0] updated_pc,
       output reg  [DATA_W-1:0] current_pc
    );
 
    localparam  [DATA_W-1:0] PC_INCREASE= {{(DATA_W-3){1'b0}},3'd4};
-
+   parameter integer BRANCH = 7'b1100011;
+   
+   wire prediction_pc_src;
    wire [DATA_W-1:0] pc_r, next_pc, next_pc_i, next_pc_i1;
    reg               pc_src;
-      
+ 
 
+   assign prediction_pc_src = branchTaken && IF_INST_OPCODE == BRANCH; 
    always@(*) pc_src = zero_flag & branch; 
       
    mux_2#(
@@ -44,7 +48,7 @@ module pc#(
    ) mux_prediction( 
       .input_a (predictionPC),
       .input_b (updated_pc),
-      .select_a(branchTaken),
+      .select_a(prediction_pc_src),
       .mux_out (next_pc_i1)
    );
 

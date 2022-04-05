@@ -118,6 +118,7 @@ pc #(
    .jump      (ID_jump),
    .current_pc(IF_PC),
    .enable    (hazardEnable),
+   .IF_INST_OPCODE (instruction[6:0]),
    .updated_pc(updated_pc),
    .branchTaken (IF_branchPredictionBoolean),
    .predictionPC (predictionPC)
@@ -187,7 +188,7 @@ control_unit control_unit(
    .opcode   (ID_INST[6:0]),
    .func3 (ID_INST[14:12]),
    .branchTaken (ID_branchPredictionBoolean),
-   .regEqual (regEqual)
+   .regEqual (regEqual),
    .alu_op   (ID_AluOp),
    .reg_dst  (reg_dst),
    .branch   (ID_Branch),

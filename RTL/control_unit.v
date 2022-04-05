@@ -5,7 +5,7 @@ module control_unit(
       input wire [6:0] opcode,
       input wire [2:0] func3,
       input wire branchTaken,
-      input wire regEqual
+      input wire regEqual,
       output reg [1:0] alu_op,
       output reg reg_dst,
       output reg branch,
@@ -15,7 +15,7 @@ module control_unit(
       output reg alu_src,
       output reg reg_write,
       output reg jump,
-      output reg flush,
+      output reg flush
    );
 
    // RISC-V opcode[6:0] (see RISC-V greensheet)
@@ -61,7 +61,7 @@ module control_unit(
 	end
 
 	BRANCH:begin
-		if ((regEqual != branchTaken && func3 == BEQ) || (regEqual == branchTaken && func3 == BEN)) begin // flush if prediction was wrong
+		if ((regEqual != branchTaken && func3 == BEQ) || (regEqual == branchTaken && func3 == BNE)) begin // flush if prediction was wrong
          alu_src   = 1'b0;
          mem_2_reg = 1'b0;
          reg_write = 1'b0;
