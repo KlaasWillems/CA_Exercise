@@ -20,9 +20,10 @@ reg [1:0] BPT [0:N_REG-1]; // Contains the predictions
 reg [0:N_REG-1] validTable; // Contains the valid bits
 
 wire [N_BITS-1:0] BPTAddress;
-assign BPTAddress = IF_PC[2*N_BITS-1:N_BITS];
+assign BPTAddress = IF_PC[2*N_BITS-1:N_BITS]; // 'address' of instruction in IF stage
 
 // output procesess
+// Reading hardware in the IF stage
 assign predictedBranchPC = BranchPCTable[BPTAddress];
 
 always @(*) begin
@@ -34,6 +35,8 @@ always @(*) begin
     endcase
 end
 
+// All tables updated in the ID stage
+
 // BranchPCTable write process
 always@(posedge clk, negedge arst_n) begin
     if(arst_n == 1'b0)begin
@@ -42,7 +45,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress) begin
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin
                 BranchPCTable[idx] <= branchPC;
             end else begin
                 BranchPCTable[idx] <= BranchPCTable[idx];
@@ -59,7 +62,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress) begin
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin
                 validTable[idx] <= 1'b1;
             end else begin
                 validTable[idx] <= validTable[idx];
@@ -77,7 +80,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress) begin // Update prediction for specific branch
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin // Update prediction for specific branch
                 if (zero_flag == 1'b1) begin
                     case(BPT[idx])
                         2'b00: BPT[idx] <= 2'b01;
