@@ -70,11 +70,10 @@ wire [1:0] ID_WB = {ID_regwrite, ID_mem_2_reg}; // wire [1:0] EX_WB = {EX_regwri
 wire [3:0] ID_M = {ID_jump, ID_Branch, ID_MemRead, ID_memwrite}; // wire [2:0] EX_M = {EX_Branch, EX_MemRead, EX_memwrite};
 wire [2:0] ID_ex = {ID_AluOp, ID_alusrc}; // wire [2:0] EX_ex = {EX_AluOp, EX_alusrc};
 wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
-wire hazardEnable;
-wire regEqual;
+wire hazardEnable, regEqual, notFlushed;
 // --------------------- IF Stage --------------
 assign hazardEnable = enable & !hazardBoolean;
-
+assign notFlushed = !flush;
 assign regEqual = ID_operand1 == ID_operand2;
 
 mux_2 #( // operand 1
@@ -100,7 +99,7 @@ branchPredictionTable BPT1(
     .arst_n(arst_n),
     .IF_PC(IF_PC),
     .branchPC(ID_Branch_PC),
-    .zero_flag(flush), 
+    .branched(notFlushed), 
     .ID_INST(ID_INST),
     .predictedBranchPC(predictionPC),
     .branchTaken(IF_branchPredictionBoolean)
