@@ -3,7 +3,7 @@ module branchPredictionTable(
     input wire arst_n,
     input wire [63:0] IF_PC,
     input wire [63:0] branchPC,
-    input wire branched, // ie. correct prediction
+    input wire notFlushed, // ie. correct prediction
     input wire [31:0] ID_INST,
     output wire [63:0] predictedBranchPC,
     output reg branchTaken
@@ -81,17 +81,17 @@ always@(posedge clk, negedge arst_n) begin
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
             if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin // Update prediction for specific branch
-                if (branched == 1'b1) begin
+                if (notFlushed == 1'b1) begin // prediction correct
                     case(BPT[idx])
-                        2'b00: BPT[idx] <= 2'b01;
-                        2'b01: BPT[idx] <= 2'b10;
+                        2'b00: BPT[idx] <= 2'b00;
+                        2'b01: BPT[idx] <= 2'b00;
                         2'b10: BPT[idx] <= 2'b11;
                         2'b11: BPT[idx] <= 2'b11;
                     endcase
                 end else begin
-                    case(BPT[idx])
-                        2'b00: BPT[idx] <= 2'b00;
-                        2'b01: BPT[idx] <= 2'b00;
+                    case(BPT[idx]) // prediction incorrect
+                        2'b00: BPT[idx] <= 2'b01;
+                        2'b01: BPT[idx] <= 2'b10;
                         2'b10: BPT[idx] <= 2'b01;
                         2'b11: BPT[idx] <= 2'b10;
                     endcase
