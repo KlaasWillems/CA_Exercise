@@ -35,7 +35,8 @@ module control_unit(
 
    //The behavior of the control unit can be found in Chapter 4, Figure 4.18
    always@(*)begin
-      case(opcode)
+
+   case(opcode)
          ALU_R:begin
             alu_src   = 1'b0;
             mem_2_reg = 1'b0;
