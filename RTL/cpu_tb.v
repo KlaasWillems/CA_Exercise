@@ -287,13 +287,13 @@ reg [63:0] result_mem_mult4 [0:46]; // data memory index: I-matrix 0-19; W-matri
 endtask
 
 task test_branchPrediction;
-   if(dut.register_file.reg_array[5] == 64'h6e)begin
+   if(dut.register_file.reg_array[5] == 64'h6e && dut.register_file.reg_array[20] == 64'h28)begin
       $display("%c[1;34m",27);
-      $display("branchPrediction Working Correctly");
+      $display("branchPrediction & jump instruction Working Correctly");
       $display("%c[0m",27);
    end else begin
       $display("%c[1;31m",27);
-      $display("Error in branchPrediction function");
+      $display("Error in branchPrediction or jump instruction function");
       $display("%c[0m",27);
       debug_regfile();
    end   
