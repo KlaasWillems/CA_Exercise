@@ -9,29 +9,30 @@ module branchPredictionTable(
     output reg branchTaken
     );
 
-parameter integer N_REG = 4;
-parameter integer N_BITS = $clog2(N_REG);
+parameter unsigned integer N_REG = 4;
+parameter unsigned integer N_BITS = $clog2(N_REG);
 parameter integer BRANCH_EQ  = 7'b1100011;
 
-integer idx;
+unsigned integer idx;
 
 reg [63:0] BranchPCTable [0:N_REG-1]; // Contains the PC of the branches
 reg [1:0] BPT [0:N_REG-1]; // Contains the predictions
 reg [0:N_REG-1] validTable; // Contains the valid bits
 
-wire [N_BITS-1:0] BPTAddress;
-assign BPTAddress = IF_PC[2*N_BITS-1:N_BITS]; // 'address' of instruction in IF stage
+wire [N_BITS-1:0] BPTReadAddress, BPTWriteAddress;
+assign BPTReadAddress = IF_PC[2*N_BITS-1:N_BITS]; // 'address' of instruction in IF stage
+assign BPTWriteAddress = BPTReadAddress - 1;
 
 // output procesess
 // Reading hardware in the IF stage
-assign predictedBranchPC = BranchPCTable[BPTAddress];
+assign predictedBranchPC = BranchPCTable[BPTReadAddress];
 
 always @(*) begin
-    case(BPT[BPTAddress])
+    case(BPT[BPTReadAddress])
         2'b00: branchTaken = 1'b0;
         2'b01: branchTaken = 1'b0;
-        2'b10: branchTaken = 1'b1 & validTable[BPTAddress]; // If unvalid address (eg. at startup): do not take branch
-        2'b11: branchTaken = 1'b1 & validTable[BPTAddress];
+        2'b10: branchTaken = 1'b1 & validTable[BPTReadAddress]; // If unvalid address (eg. at startup): do not take branch
+        2'b11: branchTaken = 1'b1 & validTable[BPTReadAddress];
     endcase
 end
 
@@ -45,7 +46,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTWriteAddress) begin
                 BranchPCTable[idx] <= branchPC;
             end else begin
                 BranchPCTable[idx] <= BranchPCTable[idx];
@@ -62,7 +63,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTWriteAddress) begin
                 validTable[idx] <= 1'b1;
             end else begin
                 validTable[idx] <= validTable[idx];
@@ -80,7 +81,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin // Update prediction for specific branch
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTWriteAddress) begin // Update prediction for specific branch
                 if (notFlushed == 1'b1) begin // prediction correct
                     case(BPT[idx])
                         2'b00: BPT[idx] <= 2'b00;
