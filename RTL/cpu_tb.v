@@ -300,6 +300,8 @@ task test_branchPrediction;
 endtask
 
 task test_advancedForwarding;
+   integer i;
+   reg [63:0] result_mem_mult4 [0:46];
    if(dut.register_file.reg_array[3] == 64'h6)begin
       $display("%c[1;34m",27);
       $display("use-branch stalling Working Correctly");
@@ -308,7 +310,8 @@ task test_advancedForwarding;
       $display("%c[1;31m",27);
       $display("Error in use-branch stalling");
       $display("%c[0m",27);
-   end   
+   end  
+   
 
    // read dmemory
    for(i=0; i<47; i=i+1)begin // send read request to the cpu dmem module.

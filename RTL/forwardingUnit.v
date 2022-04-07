@@ -24,7 +24,7 @@ assign booleanA = regWriteMem == 1'b1 && MemRegisterRd == EXRs1 && MemRegisterRd
 assign booleanB = regWriteMem == 1'b1 && MemRegisterRd == EXRs2 && MemRegisterRd != ZERO_ADDRESS;
 assign booleanC = regWriteMem == 1'b1 && MemRegisterRd == IDRs1 && MemRegisterRd != ZERO_ADDRESS;
 assign booleanD = regWriteMem == 1'b1 && MemRegisterRd == IDRs2 && MemRegisterRd != ZERO_ADDRESS;
-assign booleanE = regWriteWB == 1'b1 && MEMRs2 == regWriteWB && MemRegisterRd != ZERO_ADDRESS;
+assign booleanE = regWriteWB == 1'b1 && MEMRs2 == WBRegisterRd && WBRegisterRd != ZERO_ADDRESS;
 
 	// ALU Operand 1
 	always @(*) begin
