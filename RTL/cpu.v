@@ -100,7 +100,7 @@ branchPredictionTable BPT1(
     .clk(clk),
     .arst_n(arst_n),
     .IF_PC(IF_PC),
-    .branchPC(ID_Branch_PC),
+    .branchPC(ID_Jump_PC), //
     .notFlushed(notFlushed), 
     .ID_INST(ID_INST),
     .predictedBranchPC(predictionPC),
@@ -112,8 +112,8 @@ pc #(
 ) program_counter (
    .clk       (clk       ),
    .arst_n    (arst_n    ),
-   .branch_pc (ID_Branch_PC),
-   .jump_pc   (ID_Jump_PC),  
+   .branch_pc (ID_Branch_PC), // When prediction was wrong, either take the branch or load in PC + 4
+   .jump_pc   (ID_Jump_PC), // Always PC + im - 4
    .branch    (ID_Branch),
    .jump      (ID_jump),
    .current_pc(IF_PC),

@@ -45,7 +45,7 @@ always@(posedge clk, negedge arst_n) begin
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
-            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1 && notFlushed) begin
+            if (ID_INST[6:0] == BRANCH_EQ && idx == BPTAddress - 1) begin
                 BranchPCTable[idx] <= branchPC;
             end else begin
                 BranchPCTable[idx] <= BranchPCTable[idx];
