@@ -1,0 +1,11 @@
+addi x25, x0, 0 # use mult4 memory
+addi x26, x0, 280
+addi x2, x0, 21
+ld x1, 0(x25) # x1 should contain 20
+sw x1, 0(x26) # there shouldn't be a stall inserted here!
+addi x1, x1, 1
+beq x1, x2, jump # branch should be taken! x3 should be 6
+addi x3, x0, 5
+jal end
+jump: addi x3, x0, 6
+end:

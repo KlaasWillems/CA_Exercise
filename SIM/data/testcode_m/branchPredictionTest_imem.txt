@@ -15,4 +15,4 @@ fe209ae3
 00000013
 00000013
 00000013
-5000007E // STOP instruction mult4
+5000007E // STOP instruction branch prediction test

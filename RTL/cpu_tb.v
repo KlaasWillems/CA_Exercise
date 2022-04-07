@@ -299,6 +299,40 @@ task test_branchPrediction;
    end   
 endtask
 
+task test_advancedForwarding;
+   if(dut.register_file.reg_array[3] == 64'h6)begin
+      $display("%c[1;34m",27);
+      $display("use-branch stalling Working Correctly");
+      $display("%c[0m",27);
+   end else begin
+      $display("%c[1;31m",27);
+      $display("Error in use-branch stalling");
+      $display("%c[0m",27);
+   end   
+
+   // read dmemory
+   for(i=0; i<47; i=i+1)begin // send read request to the cpu dmem module.
+      wait(clk==1'b0);
+      wen_ext_2   = 1'b0;
+      ren_ext_2   = 1'b1;
+      addr_ext_2  = i<<3;    
+      wait(clk==1'b1);
+      result_mem_mult4[i] = rdata_ext_2;
+   end
+
+   if (result_mem_mult4[35] != 20) begin
+      $display("%c[1;31m",27);
+      $display("Error in load-store forwaring", i);
+      $display("Debug info, value:    %b", result_mem_mult4[35]);
+      $display("%c[0m",27);
+   end else begin
+      $display("%c[1;34m",27);
+      $display("load-store forwarding working correctly");
+      $display("%c[0m",27);
+   end
+endtask
+
+
 task cnt_and_wait;
 input [31:0] stop_counter;
 integer cnt_cycles;
@@ -325,6 +359,7 @@ begin
       4'h3: test_mult_3();
       4'h4: test_mult_4();
       4'h5: test_branchPrediction();
+      4'h6: test_advancedForwarding();
       default: $display("### undefined test ###");
    endcase
 

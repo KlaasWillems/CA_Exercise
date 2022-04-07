@@ -51,16 +51,16 @@ wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_updated_PC,ID_Bran
 wire [      31:0] instruction, ID_INST;
 wire [       1:0] ID_AluOp;
 wire [       3:0] alu_control;
-wire [4:0] EXRs1, EXRs2; 
+wire [4:0] EXRs1, EXRs2, MEMRs2; 
 wire              reg_dst,ID_Branch,ID_MemRead,ID_mem_2_reg,
                   ID_memwrite,ID_alusrc, ID_regwrite, ID_jump,
 			EX_regwrite, EX_mem_2_reg,
 			EX_Branch, EX_MemRead, EX_memwrite, EX_AluOp, EX_alusrc;
 wire [1:0] forwardingControlA, forwardingControlB;
-wire forwardingControlC, forwardingControlD; 
+wire forwardingControlC, forwardingControlD, forwardingControlE; 
 wire [       4:0] regfile_waddr, EX_wb_reg, MEM_wb_reg, WB_wb_reg;
 wire [      63:0] regfile_wdata,mem_data, WB_mem_data, alu_out, MEM_alu_out, WB_alu_out, EX_alu_out,
-                  regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, EX_rd1, EX_immediate, alu_operand_2, alu_temp, alu_operand_1;
+                  regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, MEM_rd, EX_rd1, EX_immediate, alu_operand_2, alu_temp, alu_operand_1;
 wire [1:0] EX_WB, MEM_WB, WB_WB, ID_WB1;
 wire [3:0] EX_M, MEM_M, ID_M1;
 wire [2:0] EX_ex, ID_ex1;
@@ -177,6 +177,7 @@ reg_arstn_en_with_reset#(
 // --------------------- ID Stage --------------
 
 hazardDetection hazardDetectionModule(
+   .ID_OPCODE(ID_INST[6:0]),
 	.MemRead(EX_M[1]),
 	.Rd(EX_wb_reg),
 	.Rs1(ID_INST[19:15]),
@@ -360,7 +361,6 @@ reg_arstn_en#( // RF Address 1
       .dout  (EXRs1)
    );
 
-
 reg_arstn_en#( // RF Address 2
       .DATA_W(5)
    ) ID_EX_FF12(
@@ -370,6 +370,7 @@ reg_arstn_en#( // RF Address 2
       .en    (enable    ),
       .dout  (EXRs2)
    );
+
 // --------------------- EX Stage --------------
 
 alu_control alu_ctrl(
@@ -434,6 +435,7 @@ forwardingUnit1 (
    .IDRs2(ID_INST[24:20]),
 	.EXRs1(EXRs1),
 	.EXRs2(EXRs2),
+   .MEMRs2(MEMRs2),
 	.MemRegisterRd(MEM_wb_reg),
 	.WBRegisterRd(WB_wb_reg),
 	.regWriteWB(WB_WB[1]),
@@ -441,7 +443,8 @@ forwardingUnit1 (
 	.ControlA(forwardingControlA),
 	.ControlB(forwardingControlB),
    .ControlC(forwardingControlC),
-   .ControlD(forwardingControlD)
+   .ControlD(forwardingControlD),
+   .ControlE(forwardingControlE)
 );
 
 reg_arstn_en#(
@@ -505,7 +508,26 @@ reg_arstn_en#(
       .dout  (MEM_wb_reg)
    );
 
+reg_arstn_en#( // RF Address 2
+      .DATA_W(5)
+   ) EX_MEM_FF9(
+      .clk   (clk),
+      .arst_n(arst_n),
+      .din   (EXRs2),
+      .en    (enable),
+      .dout  (MEMRs2)
+   );
+
 // --------------------- Mem Stage --------------
+
+mux_2 #(
+   .DATA_W(64)
+) data_memory_mux (
+   .input_a (WB_mem_data),
+   .input_b (MEM_rd2),
+   .select_a(forwardingControlE), // load store forwarding
+   .mux_out (MEM_rd)
+);
 
 
 // The data memory.
@@ -517,7 +539,7 @@ sram_BW64 #(
    .addr     (MEM_alu_out        ),
    .wen      (MEM_M[0]      ),
    .ren      (MEM_M[1]       ),
-   .wdata    (MEM_rd2),
+   .wdata    (MEM_rd),
    .rdata    (mem_data       ),   
    .addr_ext (addr_ext_2     ),
    .wen_ext  (wen_ext_2      ),
