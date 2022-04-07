@@ -21,7 +21,7 @@ module control_unit(
    // RISC-V opcode[6:0] (see RISC-V greensheet)
    parameter integer ALU_R      = 7'b0110011;
    parameter integer ALU_I      = 7'b0010011;
-   parameter integer BRANCH  = 7'b1100011;
+   parameter integer BRANCH     = 7'b1100011;
    parameter integer JUMP       = 7'b1101111;
    parameter integer LOAD       = 7'b0000011;
    parameter integer STORE      = 7'b0100011;
