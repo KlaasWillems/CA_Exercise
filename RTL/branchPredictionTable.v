@@ -9,11 +9,11 @@ module branchPredictionTable(
     output reg branchTaken
     );
 
-parameter unsigned integer N_REG = 4;
-parameter unsigned integer N_BITS = $clog2(N_REG);
+parameter integer N_REG = 4;
+parameter integer N_BITS = $clog2(N_REG);
 parameter integer BRANCH_EQ  = 7'b1100011;
 
-unsigned integer idx;
+integer idx;
 
 reg [63:0] BranchPCTable [0:N_REG-1]; // Contains the PC of the branches
 reg [1:0] BPT [0:N_REG-1]; // Contains the predictions
@@ -77,7 +77,7 @@ end
 always@(posedge clk, negedge arst_n) begin
     if(arst_n == 1'b0)begin
         for(idx = 0; idx < N_REG; idx = idx+1)begin
-            BPT[idx] <= 'b0;
+            BPT[idx] <= 2'b01;
         end
     end else begin
         for(idx = 0; idx < N_REG; idx = idx+1) begin  
