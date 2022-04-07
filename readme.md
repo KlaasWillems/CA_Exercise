@@ -14,6 +14,21 @@ We implemented a 5 stage single issue RISC-V pipeline. Some of its features are:
 </ul>
     
 ## Supported Instructions
-    TODO    
+<ul>
+    <li>jal - jump and link</i>
+    <li>ld - load double</li>
+    <li>sd - store double</li>
+    <li>beq - branch equal</li>
+    <li>bne - branch not equal</li>
+    <li>and</li>
+    <li>or</li>
+    <li>addi</li>
+    <li>add</li>
+    <li>mul</li>
+    <li>sll - shift left</li>
+    <li>srl - shift right</li>
+    <li>slt - set less than</li>
+</ul>
+    
 ## Mult4 Speedup
     TODO
