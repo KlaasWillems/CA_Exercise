@@ -11,6 +11,7 @@ module forwardingUnit
 	input wire [AddressSize-1:0] WBRegisterRd,
 	input wire regWriteWB,
 	input wire regWriteMem,
+	input wire WB_mem_read,
 	output reg [1:0] ControlA, // forwarding to operand 1 of the ALU
 	output reg [1:0] ControlB, // forwaring to operand 2 of the ALU
 	output reg ControlC, // forwarding to operand 1 of the compare logic in the ID stage
@@ -24,7 +25,7 @@ assign booleanA = regWriteMem == 1'b1 && MemRegisterRd == EXRs1 && MemRegisterRd
 assign booleanB = regWriteMem == 1'b1 && MemRegisterRd == EXRs2 && MemRegisterRd != ZERO_ADDRESS;
 assign booleanC = regWriteMem == 1'b1 && MemRegisterRd == IDRs1 && MemRegisterRd != ZERO_ADDRESS;
 assign booleanD = regWriteMem == 1'b1 && MemRegisterRd == IDRs2 && MemRegisterRd != ZERO_ADDRESS;
-assign booleanE = regWriteWB == 1'b1 && MEMRs2 == WBRegisterRd && WBRegisterRd != ZERO_ADDRESS;
+assign booleanE = regWriteWB == 1'b1 && MEMRs2 == WBRegisterRd && WBRegisterRd != ZERO_ADDRESS && WB_mem_read;
 
 	// ALU Operand 1
 	always @(*) begin

@@ -70,7 +70,7 @@ wire [1:0] ID_WB = {ID_regwrite, ID_mem_2_reg}; // wire [1:0] EX_WB = {EX_regwri
 wire [3:0] ID_M = {ID_jump, ID_Branch, ID_MemRead, ID_memwrite}; // wire [2:0] EX_M = {EX_Jump, EX_Branch, EX_MemRead, EX_memwrite};
 wire [2:0] ID_ex = {ID_AluOp, ID_alusrc}; // wire [2:0] EX_ex = {EX_AluOp, EX_alusrc};
 wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
-wire hazardEnable, regEqual, notFlushed;
+wire hazardEnable, regEqual, notFlushed, WB_M_1;
 
 
 // --------------------- IF Stage --------------
@@ -178,7 +178,8 @@ reg_arstn_en_with_reset#(
 
 hazardDetection hazardDetectionModule(
    .ID_OPCODE(ID_INST[6:0]),
-	.MemRead(EX_M[1]),
+	.ID_memWrite(ID_M[0]),
+	.EX_memRead(EX_M[1]),
 	.Rd(EX_wb_reg),
 	.Rs1(ID_INST[19:15]),
 	.Rs2(ID_INST[24:20]),
@@ -439,6 +440,7 @@ forwardingUnit1 (
 	.MemRegisterRd(MEM_wb_reg),
 	.WBRegisterRd(WB_wb_reg),
 	.regWriteWB(WB_WB[1]),
+	.WB_mem_read(WB_M_1),
 	.regWriteMem(MEM_WB[1]),
 	.ControlA(forwardingControlA),
 	.ControlB(forwardingControlB),
@@ -547,6 +549,16 @@ sram_BW64 #(
    .wdata_ext(wdata_ext_2    ),
    .rdata_ext(rdata_ext_2    )
 );
+
+reg_arstn_en#(
+      .DATA_W(1)
+   ) MEM_WB_FF5(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (MEM_M[1]),
+      .en    (enable    ),
+      .dout  (WB_M_1)
+   );
 
 reg_arstn_en#(
       .DATA_W(2)
