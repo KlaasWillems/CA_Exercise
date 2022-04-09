@@ -38,69 +38,71 @@ module cpu(
 		output wire	[63:0]  rdata_ext_2
 
    );
-// branch prediction signals
-wire IF_branchPredictionBoolean, ID_branchPredictionBoolean;
-wire [63:0] predictionPC;
-wire [63:0] ID_operand1, ID_operand2;
+
+// Parameters
 parameter [1:0] twoBitZero = 2'b00;
 parameter [3:0] fourBitZero = 4'b0000;
 parameter [2:0] threeBitZero = 3'b000;
-wire hazardBoolean, flush;
-wire              EX_zero_flag, MEM_zero_flag;
-wire [      63:0] EX_branch_pc,updated_pc,IF_PC,EX_jump_pc,ID_updated_PC,ID_Branch_PC, ID_Jump_PC, EX_updated_PC;
-wire [      31:0] instruction, ID_INST;
-wire [       1:0] ID_AluOp;
-wire [       3:0] alu_control;
-wire [4:0] EXRs1, EXRs2, MEMRs2; 
-wire              reg_dst,ID_Branch,ID_MemRead,ID_mem_2_reg,
-                  ID_memwrite,ID_alusrc, ID_regwrite, ID_jump,
-			EX_regwrite, EX_mem_2_reg,
-			EX_Branch, EX_MemRead, EX_memwrite, EX_AluOp, EX_alusrc;
+
+// Branch Prediction and Hazard Signals
+wire IF_branchPredictionBoolean, ID_branchPredictionBoolean;
+wire [63:0] predictionPC;
+wire [63:0] ID_operand1, ID_operand2;
+wire hazardBoolean, flush, hazardEnable, regEqual, notFlushed, WB_M_1;
 wire [1:0] forwardingControlA, forwardingControlB;
 wire forwardingControlC, forwardingControlD, forwardingControlE; 
-wire [       4:0] regfile_waddr, EX_wb_reg, MEM_wb_reg, WB_wb_reg;
-wire [      63:0] regfile_wdata,mem_data, WB_mem_data, alu_out, MEM_alu_out, WB_alu_out, EX_alu_out,
-                  regfile_rdata_1,regfile_rdata_2, EX_rd2, MEM_rd2, MEM_rd, EX_rd1, EX_immediate, alu_operand_2, alu_temp, alu_operand_1;
+
+// WB Signals
+wire [4:0] WB_wb_reg;
+wire [63:0] WB_mem_data, WB_alu_out, WB_regfile_wdata;
+
+// MEM Signals
+wire [4:0] MEM_Rs2, MEM_wb_reg; 
+wire MEM_zero_flag;
+wire [63:0] MEM_mem_data, MEM_rd2, MEM_rd, MEM_alu_out;
+
+// EX Signals
+wire [3:0] EX_alu_control;
+wire [4:0] EX_Rs1, EX_Rs2, EX_wb_reg;
+wire [63:0] EX_branch_pc, EX_updated_PC, EX_jump_pc, EX_alu_out, EX_out, EX_rd2, EX_rd1, EX_immediate, EX_alu_operand_2, EX_alu_temp, EX_alu_operand_1;
+
+// EX Control Signals
 wire [1:0] EX_WB, MEM_WB, WB_WB, ID_WB1;
 wire [3:0] EX_M, MEM_M, ID_M1;
 wire [2:0] EX_ex, ID_ex1;
 wire [9:0] EX_func73;
-wire signed [63:0] immediate_extended;
+wire EX_zero_flag;
+
+// ID Signals
+wire signed [63:0] ID_immediate_extended;
+wire [63:0] ID_updated_PC, ID_Branch_PC, ID_Jump_PC, ID_regfile_rdata_1, ID_regfile_rdata_2;
+wire [1:0] ID_AluOp;
+wire [31:0] ID_INST;
+
+// ID Control Signals
+wire ID_Branch, ID_MemRead, ID_mem_2_reg, ID_memwrite, ID_alusrc, ID_regwrite, ID_jump;
 wire [1:0] ID_WB = {ID_regwrite, ID_mem_2_reg}; // wire [1:0] EX_WB = {EX_regwrite, EX_mem_2_reg};
 wire [3:0] ID_M = {ID_jump, ID_Branch, ID_MemRead, ID_memwrite}; // wire [2:0] EX_M = {EX_Jump, EX_Branch, EX_MemRead, EX_memwrite};
 wire [2:0] ID_ex = {ID_AluOp, ID_alusrc}; // wire [2:0] EX_ex = {EX_AluOp, EX_alusrc};
 wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
-wire hazardEnable, regEqual, notFlushed, WB_M_1;
 
+// IF Signals
+wire [31:0] instruction;
+wire [63:0] IF_updated_pc, IF_PC;
 
-// --------------------- IF Stage --------------
-assign hazardEnable = enable & !hazardBoolean;
+// --------------------- Assignments ---------------------
+
+assign hazardEnable = enable & !hazardBoolean; // Stall
 assign notFlushed = !flush;
 assign regEqual = ID_operand1 == ID_operand2;
 
-mux_2 #( // operand 1
-	.DATA_W(64)
-) forwardingMux3 (
-   .input_a (MEM_alu_out),
-   .input_b (regfile_rdata_1),
-   .select_a(forwardingControlC),
-   .mux_out (ID_operand1)
-);
-
-mux_2 #( // operand 1
-	.DATA_W(64)
-) forwardingMux4 (
-   .input_a (MEM_alu_out),
-   .input_b (regfile_rdata_2),
-   .select_a(forwardingControlD),
-   .mux_out (ID_operand2)
-);
+// --------------------- IF Stage ---------------------
 
 branchPredictionTable BPT1(
     .clk(clk),
     .arst_n(arst_n),
     .IF_PC(IF_PC),
-    .branchPC(ID_Jump_PC), //
+    .branchPC(ID_Jump_PC), 
     .notFlushed(notFlushed), 
     .ID_INST(ID_INST),
     .predictedBranchPC(predictionPC),
@@ -119,7 +121,7 @@ pc #(
    .current_pc(IF_PC),
    .enable    (hazardEnable),
    .IF_INST_OPCODE (instruction[6:0]),
-   .updated_pc(updated_pc),
+   .updated_pc(IF_updated_pc),
    .branchTaken (IF_branchPredictionBoolean),
    .predictionPC (predictionPC)
 );
@@ -149,7 +151,7 @@ reg_arstn_en#(
    ) IF_ID_FF1(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (updated_pc   ),
+      .din   (IF_updated_pc   ),
       .en    (hazardEnable    ),
       .dout  (ID_updated_PC)
    );
@@ -176,13 +178,31 @@ reg_arstn_en_with_reset#(
 
 // --------------------- ID Stage --------------
 
+mux_2 #( // operand 1
+	.DATA_W(64)
+) forwardingMux3 (
+   .input_a (MEM_alu_out),
+   .input_b (ID_regfile_rdata_1),
+   .select_a(forwardingControlC),
+   .mux_out (ID_operand1)
+);
+
+mux_2 #( // operand 2
+	.DATA_W(64)
+) forwardingMux4 (
+   .input_a (MEM_alu_out),
+   .input_b (ID_regfile_rdata_2),
+   .select_a(forwardingControlD),
+   .mux_out (ID_operand2)
+);
+
 hazardDetection hazardDetectionModule(
    .ID_OPCODE(ID_INST[6:0]),
 	.ID_memWrite(ID_M[0]),
 	.EX_memRead(EX_M[1]),
-	.Rd(EX_wb_reg),
-	.Rs1(ID_INST[19:15]),
-	.Rs2(ID_INST[24:20]),
+	.EX_Rd(EX_wb_reg),
+	.ID_Rs1(ID_INST[19:15]),
+	.ID_Rs2(ID_INST[24:20]),
 	.hazard(hazardBoolean)
 );
 
@@ -192,7 +212,6 @@ control_unit control_unit(
    .branchTaken (ID_branchPredictionBoolean),
    .regEqual (regEqual),
    .alu_op   (ID_AluOp),
-   .reg_dst  (reg_dst),
    .branch   (ID_Branch),
    .mem_read (ID_MemRead),
    .mem_2_reg(ID_mem_2_reg),
@@ -207,7 +226,7 @@ branch_unit#(
    .DATA_W(64)
 )branch_unit(
    .updated_pc         (ID_updated_PC),
-   .immediate_extended (immediate_extended),
+   .immediate_extended (ID_immediate_extended),
    .func3              (ID_INST[14:12]),
    .regEqual           (regEqual),
    .branchPrediction   (ID_branchPredictionBoolean),
@@ -224,14 +243,14 @@ register_file #(
    .raddr_1  (ID_INST[19:15]),
    .raddr_2  (ID_INST[24:20]),
    .waddr    (WB_wb_reg ),
-   .wdata    (regfile_wdata),
-   .rdata_1  (regfile_rdata_1),
-   .rdata_2  (regfile_rdata_2)
+   .wdata    (WB_regfile_wdata),
+   .rdata_1  (ID_regfile_rdata_1),
+   .rdata_2  (ID_regfile_rdata_2)
 );
 
 immediate_extend_unit immediate_extend_u(
     .instruction         (ID_INST),
-    .immediate_extended  (immediate_extended)
+    .immediate_extended  (ID_immediate_extended)
 );
 
 mux_2 #(
@@ -296,7 +315,7 @@ reg_arstn_en#(
    ) ID_EX_FF5(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (  regfile_rdata_1 ),
+      .din   (ID_regfile_rdata_1),
       .en    (enable    ),
       .dout  (EX_rd1)
    );
@@ -306,7 +325,7 @@ reg_arstn_en#(
    ) ID_EX_FF6(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (  regfile_rdata_2 ),
+      .din   (ID_regfile_rdata_2),
       .en    (enable    ),
       .dout  (EX_rd2)
    );
@@ -316,7 +335,7 @@ reg_arstn_en#(
    ) ID_EX_FF7(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (  immediate_extended ),
+      .din   (ID_immediate_extended),
       .en    (enable    ),
       .dout  (EX_immediate)
    );
@@ -359,7 +378,7 @@ reg_arstn_en#( // RF Address 1
       .arst_n(arst_n    ),
       .din   (ID_INST[19:15]),
       .en    (enable    ),
-      .dout  (EXRs1)
+      .dout  (EX_Rs1)
    );
 
 reg_arstn_en#( // RF Address 2
@@ -369,7 +388,7 @@ reg_arstn_en#( // RF Address 2
       .arst_n(arst_n    ),
       .din   (ID_INST[24:20]),
       .en    (enable    ),
-      .dout  (EXRs2)
+      .dout  (EX_Rs2)
    );
 
 // --------------------- EX Stage --------------
@@ -378,16 +397,16 @@ alu_control alu_ctrl(
    .func7       (EX_func73[9:3]),
    .func3          (EX_func73[2:0]),
    .alu_op         (EX_ex[2:1] ),
-   .alu_control    (alu_control       )
+   .alu_control    (EX_alu_control)
 );
 
 alu#(
    .DATA_W(64)
 ) alu(
-   .alu_in_0 (alu_operand_1),
-   .alu_in_1 (alu_operand_2),
-   .alu_ctrl (alu_control),
-   .alu_out  (alu_out         ),
+   .alu_in_0 (EX_alu_operand_1),
+   .alu_in_1 (EX_alu_operand_2),
+   .alu_ctrl (EX_alu_control),
+   .alu_out  (EX_alu_out         ),
    .zero_flag(EX_zero_flag       ),
    .overflow (                )
 );
@@ -397,18 +416,18 @@ mux_3 #( // operand 2
 ) forwardingMux2 (
    .input_a (EX_rd2),
    .input_b (MEM_alu_out),
-   .input_c (regfile_wdata),
+   .input_c (WB_regfile_wdata),
    .select_a(forwardingControlB),
-   .mux_out (alu_temp)
+   .mux_out (EX_alu_temp)
 );
 
-mux_2 #(
+mux_2 #( // operand 2
    .DATA_W(64)
 ) alu_operand_mux (
    .input_a (EX_immediate),
-   .input_b (alu_temp),
+   .input_b (EX_alu_temp),
    .select_a(EX_ex[0]),
-   .mux_out (alu_operand_2)
+   .mux_out (EX_alu_operand_2)
 );
 
 mux_3 #( // operand 1
@@ -416,27 +435,27 @@ mux_3 #( // operand 1
 ) forwardingMux1 (
    .input_a (EX_rd1),
    .input_b (MEM_alu_out),
-   .input_c (regfile_wdata),
+   .input_c (WB_regfile_wdata),
    .select_a(forwardingControlA),
-   .mux_out (alu_operand_1)
+   .mux_out (EX_alu_operand_1)
 );
 
 mux_2 #(
    .DATA_W(64)
 ) alu_out_mux (
    .input_a (EX_updated_PC),
-   .input_b (alu_out),
+   .input_b (EX_alu_out),
    .select_a(EX_M[3]), // Jump signal. If 1, Write PC+4 to registers
-   .mux_out (EX_alu_out)
+   .mux_out (EX_out)
 );
 
 forwardingUnit #(.AddressSize(5))
 forwardingUnit1 (
    .IDRs1(ID_INST[19:15]),
    .IDRs2(ID_INST[24:20]),
-	.EXRs1(EXRs1),
-	.EXRs2(EXRs2),
-   .MEMRs2(MEMRs2),
+	.EXRs1(EX_Rs1),
+	.EXRs2(EX_Rs2),
+   .MEMRs2(MEM_Rs2),
 	.MemRegisterRd(MEM_wb_reg),
 	.WBRegisterRd(WB_wb_reg),
 	.regWriteWB(WB_WB[1]),
@@ -485,7 +504,7 @@ reg_arstn_en#(
    ) EX_MEM_FF6(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (EX_alu_out),
+      .din   (EX_out),
       .en    (enable    ),
       .dout  (MEM_alu_out)
    );
@@ -495,7 +514,7 @@ reg_arstn_en#(
    ) EX_MEM_FF7(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (alu_temp),
+      .din   (EX_alu_temp),
       .en    (enable    ),
       .dout  (MEM_rd2)
    );
@@ -515,9 +534,9 @@ reg_arstn_en#( // RF Address 2
    ) EX_MEM_FF9(
       .clk   (clk),
       .arst_n(arst_n),
-      .din   (EXRs2),
+      .din   (EX_Rs2),
       .en    (enable),
-      .dout  (MEMRs2)
+      .dout  (MEM_Rs2)
    );
 
 // --------------------- Mem Stage --------------
@@ -542,7 +561,7 @@ sram_BW64 #(
    .wen      (MEM_M[0]      ),
    .ren      (MEM_M[1]       ),
    .wdata    (MEM_rd),
-   .rdata    (mem_data       ),   
+   .rdata    (MEM_mem_data       ),   
    .addr_ext (addr_ext_2     ),
    .wen_ext  (wen_ext_2      ),
    .ren_ext  (ren_ext_2      ),
@@ -575,7 +594,7 @@ reg_arstn_en#(
    ) MEM_WB_FF2(
       .clk   (clk       ),
       .arst_n(arst_n    ),
-      .din   (mem_data),
+      .din   (MEM_mem_data),
       .en    (enable    ),
       .dout  (WB_mem_data)
    );
@@ -608,7 +627,7 @@ mux_2 #(
    .input_a  (WB_mem_data     ),
    .input_b  (WB_alu_out      ),
    .select_a (WB_WB[0]    ),
-   .mux_out  (regfile_wdata)
+   .mux_out  (WB_regfile_wdata)
 );
 
 

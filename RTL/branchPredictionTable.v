@@ -1,30 +1,30 @@
-module branchPredictionTable(
+module branchPredictionTable #(
+	parameter integer N_REG = 16 // Size of branchprediction table
+	)(
     input wire clk,
     input wire arst_n,
-    input wire [63:0] IF_PC,
-    input wire [63:0] branchPC,
+    input wire [63:0] IF_PC, // PC in IF stage
+    input wire [63:0] branchPC, // The branch PC computed in the ID stage
     input wire notFlushed, // ie. correct prediction
-    input wire [31:0] ID_INST,
-    output wire [63:0] predictedBranchPC,
-    output reg branchTaken
+    input wire [31:0] ID_INST, // Instruction in the ID stage
+    output wire [63:0] predictedBranchPC, // Predicted branch
+    output reg branchTaken // If the branch is taken or not
     );
 
-parameter integer N_REG = 4;
 parameter integer N_BITS = $clog2(N_REG);
 parameter integer BRANCH_EQ  = 7'b1100011;
 
-integer idx;
+integer idx; // Loop index
 
 reg [63:0] BranchPCTable [0:N_REG-1]; // Contains the PC of the branches
 reg [1:0] BPT [0:N_REG-1]; // Contains the predictions
 reg [0:N_REG-1] validTable; // Contains the valid bits
 
 wire [N_BITS-1:0] BPTReadAddress, BPTWriteAddress;
-assign BPTReadAddress = IF_PC[2*N_BITS-1:N_BITS]; // 'address' of instruction in IF stage
-assign BPTWriteAddress = BPTReadAddress - 1;
+assign BPTReadAddress = IF_PC[1+N_BITS:2]; // 'address' of instruction in IF stage
+assign BPTWriteAddress = BPTReadAddress - 1; // 'address' of instruction in ID stage
 
-// output procesess
-// Reading hardware in the IF stage
+// --------- Read procesess --------- (IF Stage)
 assign predictedBranchPC = BranchPCTable[BPTReadAddress];
 
 always @(*) begin
@@ -36,12 +36,12 @@ always @(*) begin
     endcase
 end
 
-// All tables updated in the ID stage
+// --------- Write procesess --------- (ID Stage)
 
 // BranchPCTable write process
 always@(posedge clk, negedge arst_n) begin
     if(arst_n == 1'b0)begin
-        for(idx = 0; idx < N_REG; idx = idx+1)begin
+        for(idx = 0; idx < N_REG; idx = idx+1) begin
             BranchPCTable[idx] <= 'b0;
         end
     end else begin
@@ -58,7 +58,7 @@ end
 // Update valid table
 always@(posedge clk, negedge arst_n) begin
     if(arst_n == 1'b0)begin
-        for(idx = 0; idx < N_REG; idx = idx+1)begin
+        for(idx = 0; idx < N_REG; idx = idx+1) begin
             validTable[idx] <= 'b0;
         end
     end else begin
@@ -76,7 +76,7 @@ end
 // Update Prediction
 always@(posedge clk, negedge arst_n) begin
     if(arst_n == 1'b0)begin
-        for(idx = 0; idx < N_REG; idx = idx+1)begin
+        for(idx = 0; idx < N_REG; idx = idx+1) begin
             BPT[idx] <= 2'b01;
         end
     end else begin
@@ -97,7 +97,7 @@ always@(posedge clk, negedge arst_n) begin
                         2'b11: BPT[idx] <= 2'b10;
                     endcase
                 end
-            end else begin // Other branch store old prediction
+            end else begin // Other branches: store old prediction
                 BPT[idx] <= BPT[idx];
             end
         end

@@ -7,7 +7,6 @@ module control_unit(
       input wire branchTaken,
       input wire regEqual,
       output reg [1:0] alu_op,
-      output reg reg_dst,
       output reg branch,
       output reg mem_read,
       output reg mem_2_reg,
@@ -34,7 +33,7 @@ module control_unit(
    parameter [1:0] R_TYPE_OPCODE  = 2'b10;
 
    //The behavior of the control unit can be found in Chapter 4, Figure 4.18
-   always@(*)begin
+   always @(*) begin
 
    case(opcode)
          ALU_R:begin
@@ -46,7 +45,7 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = R_TYPE_OPCODE;
             jump      = 1'b0;
-	         flush     = 1'b0;
+	    flush     = 1'b0;
 	end
 	
 	ALU_I:begin
@@ -58,7 +57,7 @@ module control_unit(
             branch    = 1'b0;
             alu_op    = ADD_OPCODE;
             jump      = 1'b0;	
-	         flush     = 1'b0;
+	    flush     = 1'b0;
 	end
 
 	BRANCH:begin
@@ -110,28 +109,28 @@ module control_unit(
 	end
 	
 	JUMP:begin
-			alu_src   = 1'b0;
-			mem_2_reg = 1'b0;
-			reg_write = 1'b1;
-			mem_read  = 1'b0;
-			mem_write = 1'b0;
-			branch    = 1'b0;
-			alu_op    = ADD_OPCODE;
-			jump      = 1'b1;
-			flush     = 1'b1; // Always flush with jump instruction
+		alu_src   = 1'b0;
+		mem_2_reg = 1'b0;
+		reg_write = 1'b1; // Write PC + 4 to Rd register 
+		mem_read  = 1'b0;
+		mem_write = 1'b0;
+		branch    = 1'b0;
+		alu_op    = ADD_OPCODE;
+		jump      = 1'b1;
+		flush     = 1'b1; // Always flush with jump instruction, Address is not store in branch prediction table
 	end
          
-   // Declare the control signals for each one of the instructions here...
+   // nop if instruction is not recognized
    default:begin
-         alu_src   = 1'b0;
-         mem_2_reg = 1'b0;
-         reg_write = 1'b0;
-         mem_read  = 1'b0;
-         mem_write = 1'b0;
-         branch    = 1'b0;
-         alu_op    = R_TYPE_OPCODE;
-         jump      = 1'b0;
-         flush     = 1'b0;
+	 alu_src   = 1'b0;
+	 mem_2_reg = 1'b0;
+	 reg_write = 1'b0;
+	 mem_read  = 1'b0;
+	 mem_write = 1'b0;
+	 branch    = 1'b0;
+	 alu_op    = R_TYPE_OPCODE;
+	 jump      = 1'b0;
+	 flush     = 1'b0;
    end
 
       endcase
