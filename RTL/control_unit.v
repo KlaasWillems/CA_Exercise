@@ -7,7 +7,6 @@ module control_unit(
       input wire branchTaken,
       input wire regEqual,
       output reg [1:0] alu_op,
-      output reg reg_dst,
       output reg branch,
       output reg mem_read,
       output reg mem_2_reg,
