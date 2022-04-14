@@ -1,12 +1,12 @@
 //Register File
-//Function: This block has 2 main functions (1) Read the registers pointed by the incoming addresses (raddr_1 and raddr_2) into the outputs rdata_1 and rdata_2 respectively. (2) Write the desired writing data (wdata) into the address pointed by the write address (waddr) if write enable (reg_write) is asserted.
+//Function: This block has 2 main functions (1) Read the registers pointed by the incoming addresses (raddr_1 and raddr_2) into the outputs rdata_1 and rdata_2 respectively. (2) Write the desired writing data (wdata_1) into the address pointed by the write address (waddr_1) if write enable (reg_write) is asserted.
 //clk: System clock
 //arst_n: Asynchronous Reset
 //reg_write: Write enable signal. If reg_write is asserted the register file is written in the next clock cycle.
 //Raddr_1 (5 bits): Address of the first register aimed to read.
 //Raddr_2 (5 bits): Address of the second register aimed to read
-//waddr (5 bits): Address of the register to be written.
-//Wdata (16 bits): Incoming data to write.
+//waddr_1 (5 bits): Address of the register to be written.
+//wdata_1 (16 bits): Incoming data to write.
 //Outputs:
 //rdata_1: Data read from address 1.
 //rdata_2: Data read from address 2.
@@ -16,13 +16,18 @@ module register_file#(
 )(
       input  wire              clk,
       input  wire              arst_n,
-      input  wire              reg_write,
+      input  wire              reg_write_1,
+      input  wire              reg_write_2,
       input  wire [       4:0] raddr_1,
       input  wire [       4:0] raddr_2,
-      input  wire [       4:0] waddr,
-      input  wire [DATA_W-1:0] wdata,
+      input  wire [       4:0] raddr_3,
+      input  wire [       4:0] waddr_1,
+      input  wire [       4:0] waddr_2,
+      input  wire [DATA_W-1:0] wdata_1,
+      input  wire [DATA_1-1:0] wdata_2,
       output reg  [DATA_W-1:0] rdata_1,
-      output reg  [DATA_W-1:0] rdata_2
+      output reg  [DATA_W-1:0] rdata_2,
+      output reg  [DATA_W-1:0] rdata_3
    );
 
    parameter integer N_REG      = 32;
@@ -33,18 +38,47 @@ module register_file#(
 
    integer idx;
 
+   // Read Process 1
+   always @(*) begin
+      if (reg_write_1 && (waddr_1 == raddr_1)) begin
+         rdata_1 = wdata_1;
+      end else if (reg_write_2 && (waddr_2 == raddr_1)) begin
+         rdata_1 = wdata_2;
+      end else begin
+         rdata_1 = reg_array[raddr_1];
+      end
+   end
 
-   always@(*) begin
-         rdata_1 = (reg_write && (waddr == raddr_1)) ? wdata : reg_array[raddr_1];
-         rdata_2 = (reg_write && (waddr == raddr_2)) ? wdata : reg_array[raddr_2];
+   // Read Process 2
+   always @(*) begin
+      if (reg_write_1 && (waddr_1 == raddr_2)) begin
+         rdata_2 = wdata_1;
+      end else if (reg_write_2 && (waddr_2 == raddr_2)) begin
+         rdata_2 = wdata_2;
+      end else begin
+         rdata_2 = reg_array[raddr_2];
+      end
+   end
+
+   // Read Process 3
+   always @(*) begin
+      if (reg_write_1 && (waddr_1 == raddr_3)) begin
+         rdata_3 = wdata_1;
+      end else if (reg_write_2 && (waddr_2 == raddr_3)) begin
+         rdata_3 = wdata_2;
+      end else begin
+         rdata_3 = reg_array[raddr_3];
+      end
    end
 
 
    //Register file write process
    always@(*) begin
       for(idx=0; idx<N_REG; idx =idx+1)begin
-         if((reg_write == 1'b1) && (waddr == idx)) begin
-            reg_array_nxt[idx] = wdata;
+         if((reg_write_1 == 1'b1) && (waddr_1 == idx)) begin
+            reg_array_nxt[idx] = wdata_1;
+         end else if ((reg_write_2 == 1'b1) && (waddr_2 == idx)) begin
+            reg_array_nxt[idx] = wdata_2;
          end else begin
             reg_array_nxt[idx] = reg_array[idx];
          end
@@ -63,8 +97,6 @@ module register_file#(
       end
    end
 
-    
-    
 endmodule
 
 

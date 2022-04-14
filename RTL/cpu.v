@@ -239,13 +239,17 @@ register_file #(
 ) register_file(
    .clk      (clk               ),
    .arst_n   (arst_n            ),
-   .reg_write(WB_WB[1]         ),
+   .reg_write_1 (WB_WB[1]         ),
+   .reg_Write_2 (1'b0),
    .raddr_1  (ID_INST[19:15]),
    .raddr_2  (ID_INST[24:20]),
-   .waddr    (WB_wb_reg ),
-   .wdata    (WB_regfile_wdata),
+   .raddr_3  (5'b0),
+   .waddr_1    (WB_wb_reg ),
+   .waddr_2    (5'b0),
+   .wdata_1    (WB_regfile_wdata),
+   .wdata_2    (32'b0),
    .rdata_1  (ID_regfile_rdata_1),
-   .rdata_2  (ID_regfile_rdata_2)
+   .rdata_2  (ID_regfile_rdata_2) // rdata_3 here as well
 );
 
 immediate_extend_unit immediate_extend_u(
