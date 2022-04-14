@@ -130,7 +130,7 @@ pc #(
 );
 
 // The instruction memory.
-sram_BW32 #(
+sram_BW64 #(
    .ADDR_W(9 ),
    .DATA_W(64)
 ) instruction_memory(
@@ -139,12 +139,12 @@ sram_BW32 #(
    .wen      (1'b0          ),
    .ren      (1'b1          ),
    .wdata    (64'b0         ),
-   .rdata    (instruction64 ), // change
+   .rdata    (instruction64 ),
    .addr_ext (addr_ext      ), 
    .wen_ext  (wen_ext       ), 
    .ren_ext  (ren_ext       ),
-   .wdata_ext(wdata_ext     ), // change
-   .rdata_ext(rdata_ext     )  // change
+   .wdata_ext(wdata_ext     ),
+   .rdata_ext(rdata_ext     ) 
 );
 
 // IF_ID Flipflops
@@ -250,7 +250,7 @@ register_file #(
    .waddr_1    (WB_wb_reg ),
    .waddr_2    (5'b0),
    .wdata_1    (WB_regfile_wdata),
-   .wdata_2    (32'b0),
+   .wdata_2    (64'b0),
    .rdata_1  (ID_regfile_rdata_1),
    .rdata_2  (ID_regfile_rdata_2) // rdata_3 here as well
 );
