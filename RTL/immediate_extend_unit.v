@@ -27,11 +27,11 @@ module immediate_extend_unit(
             end
 
             BRANCH_EQ:begin // TYPE_SB
-                immediate_extended = {{52{instr[31]}}, instr[7], instr[30:25], instr[11:8],1'b0}; // RISC-V: {imm, 1'b0}
+                immediate_extended = {{51{instr[31]}}, instr[7], instr[30:25], instr[11:8],2'b00}; // RISC-V: {imm, 1'b0} (2 zero bits for multiple issue!)
             end
 
             JUMP:begin // TYPE_UJ
-            immediate_extended = {{44{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0}; // RISC-V: {imm, 1'b0}
+            immediate_extended = {{43{instr[31]}}, instr[19:12], instr[20], instr[30:21], 2'b00}; // RISC-V: {imm, 1'b0}
             end
 
             LOAD_WORD:begin // TYPE_I

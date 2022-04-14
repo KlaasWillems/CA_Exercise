@@ -92,7 +92,7 @@ begin
       wen_ext   = 1'b1;
       ren_ext   = 1'b0;
       wdata_ext = instr_mem[imem_cnt];
-      addr_ext  = imem_cnt<<2;
+      addr_ext  = imem_cnt<<3;
       wait(clk==1'b1);      
    end
 
@@ -354,7 +354,7 @@ begin
    // [31:28] to distinguish test cases; 
    // [6:0]   a fake Opcode just for the wait();
    wait (dut.instruction[6:0]==7'b1111110);
-
+   $display("%d cycles", counter);
    case(dut.instruction[31:28])
       4'h0: test_basic();
       4'h1: test_mult_1();

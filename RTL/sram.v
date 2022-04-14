@@ -25,7 +25,7 @@
 
 module sram_BW32#(
    parameter integer ADDR_W      = 8,
-   parameter integer DATA_W      = 16
+   parameter integer DATA_W      = 32
 ) (
 		input wire			       clk,
 		input wire	      [63:0] addr,

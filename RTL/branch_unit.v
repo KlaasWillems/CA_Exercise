@@ -23,7 +23,7 @@ module branch_unit#(
    );
    parameter integer BEQ = 3'b000;
    parameter integer BNE = 3'b001;
-   localparam  [DATA_W-1:0] PC_INCREASE= {{(DATA_W-3){1'b0}},3'd4};
+   localparam  [DATA_W-1:0] PC_INCREASE = 64'd8;
    reg shouldHaveTaken;
 
    // Prediction: branch taken but should not have taken: branch_pc = updated_pc

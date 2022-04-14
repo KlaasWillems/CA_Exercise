@@ -30,7 +30,7 @@ module pc#(
       output reg  [DATA_W-1:0] current_pc
    );
 
-   localparam  [DATA_W-1:0] PC_INCREASE= {{(DATA_W-3){1'b0}},3'd4};
+   localparam  [DATA_W-1:0] PC_INCREASE = 64'd8;
    parameter integer BRANCH = 7'b1100011;
    
    wire prediction_pc_src;
