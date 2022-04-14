@@ -2,7 +2,8 @@
 // Function: Generates the control signals for each one of the datapath resources
 
 module control_unit(
-      input wire [6:0] opcode,
+      input wire opcode_2, // for the second issue (addi instructions)
+      input wire [6:0] opcode_1,
       input wire [2:0] func3,
       input wire branchTaken,
       input wire regEqual,
@@ -12,7 +13,8 @@ module control_unit(
       output reg mem_2_reg,
       output reg mem_write,
       output reg alu_src,
-      output reg reg_write,
+      output reg reg_write_1,
+      output reg reg_write_2,
       output reg jump,
       output reg flush
    );
@@ -32,14 +34,22 @@ module control_unit(
    parameter [1:0] SUB_OPCODE     = 2'b01;
    parameter [1:0] R_TYPE_OPCODE  = 2'b10;
 
+   // addi second issue
+   always @(*) begin
+      case(opcode_2):
+         default: reg_write_2 = 1'b0;
+         ALU_I: reg_write_2 = 1'b1;
+      endcase
+   end
+
    //The behavior of the control unit can be found in Chapter 4, Figure 4.18
    always @(*) begin
 
-   case(opcode)
+   case(opcode_1)
          ALU_R:begin
             alu_src   = 1'b0;
             mem_2_reg = 1'b0;
-            reg_write = 1'b1;
+            reg_write_1 = 1'b1;
             mem_read  = 1'b0;
             mem_write = 1'b0;
             branch    = 1'b0;
@@ -51,7 +61,7 @@ module control_unit(
 	ALU_I:begin
             alu_src   = 1'b1;
             mem_2_reg = 1'b0;
-            reg_write = 1'b1;
+            reg_write_1 = 1'b1;
             mem_read  = 1'b0;
             mem_write = 1'b0;
             branch    = 1'b0;
@@ -64,7 +74,7 @@ module control_unit(
 		if ((regEqual != branchTaken && func3 == BEQ) || (regEqual == branchTaken && func3 == BNE)) begin // flush if prediction was wrong
          alu_src   = 1'b0;
          mem_2_reg = 1'b0;
-         reg_write = 1'b0;
+         reg_write_1 = 1'b0;
          mem_read  = 1'b0;
          mem_write = 1'b0;
          branch    = 1'b1;
@@ -74,7 +84,7 @@ module control_unit(
 		end else begin
          alu_src   = 1'b0;
          mem_2_reg = 1'b0;
-         reg_write = 1'b0;
+         reg_write_1 = 1'b0;
          mem_read  = 1'b0;
          mem_write = 1'b0;
          branch    = 1'b0;
@@ -87,7 +97,7 @@ module control_unit(
 	STORE:begin
          alu_src   = 1'b1;
          mem_2_reg = 1'b0;
-         reg_write = 1'b0;
+         reg_write_1 = 1'b0;
          mem_read  = 1'b0;
          mem_write = 1'b1;
          branch    = 1'b0;
@@ -99,7 +109,7 @@ module control_unit(
 	LOAD:begin
          alu_src   = 1'b1;
          mem_2_reg = 1'b1;
-         reg_write = 1'b1;
+         reg_write_1 = 1'b1;
          mem_read  = 1'b1;
          mem_write = 1'b0;
          branch    = 1'b0;
@@ -111,7 +121,7 @@ module control_unit(
 	JUMP:begin
 		alu_src   = 1'b0;
 		mem_2_reg = 1'b0;
-		reg_write = 1'b1; // Write PC + 4 to Rd register 
+		reg_write_1 = 1'b1; // Write PC + 4 to Rd register 
 		mem_read  = 1'b0;
 		mem_write = 1'b0;
 		branch    = 1'b0;
@@ -124,7 +134,7 @@ module control_unit(
    default:begin
 	 alu_src   = 1'b0;
 	 mem_2_reg = 1'b0;
-	 reg_write = 1'b0;
+	 reg_write_1 = 1'b0;
 	 mem_read  = 1'b0;
 	 mem_write = 1'b0;
 	 branch    = 1'b0;

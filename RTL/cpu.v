@@ -87,8 +87,14 @@ wire [2:0] ID_ex = {ID_AluOp, ID_alusrc}; // wire [2:0] EX_ex = {EX_AluOp, EX_al
 wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
 
 // IF Signals
-wire [31:0] instruction, instructionMI2;
+wire [31:0] instruction;
 wire [63:0] IF_updated_pc, IF_PC, instruction64;
+
+// Issue 2 signals (addi pipeline)
+wire ID_regwrite_2, EX_regwrite_2, WB_regwrite_2;
+wire [31:0] instruction_2, ID_INST_2;
+wire [63:0] ID_regfile_rdata_3, ID_immediate_extended_2, EX_rd3, EX_immediate_2, EX_alu_out_2, WB_alu_out_2;
+wire [4:0] EX_wb_reg_2, WB_wb_reg_2;
 
 // --------------------- Assignments ---------------------
 
@@ -97,7 +103,7 @@ assign notFlushed = !flush;
 assign regEqual = ID_operand1 == ID_operand2;
 
 assign instruction = instruction64[31:0];
-assign instructionMI2 = instruction64[63:32];
+assign instruction_2 = instruction64[63:32];
 
 // --------------------- IF Stage ---------------------
 
@@ -147,8 +153,6 @@ sram_BW64 #(
    .rdata_ext(rdata_ext     ) 
 );
 
-// IF_ID Flipflops
-
 reg_arstn_en#(
       .DATA_W(64)
    ) IF_ID_FF1(
@@ -167,6 +171,16 @@ reg_arstn_en_with_reset#(
       .din   (instruction   ),
       .en    (hazardEnable),
       .dout  (ID_INST)
+   );
+reg_arstn_en_with_reset#(
+      .DATA_W(32)
+   ) IF_ID_FF2(
+      .clk   (clk       ),
+      .reset (flush),
+      .arst_n(arst_n    ),
+      .din   (instruction_2   ),
+      .en    (hazardEnable),
+      .dout  (ID_INST_2)
    );
 reg_arstn_en_with_reset#(
       .DATA_W(1)
@@ -210,7 +224,8 @@ hazardDetection hazardDetectionModule(
 );
 
 control_unit control_unit(
-   .opcode   (ID_INST[6:0]),
+   .opcode_2   (ID_INST_2[6:0])
+   .opcode_1   (ID_INST[6:0]),
    .func3 (ID_INST[14:12]),
    .branchTaken (ID_branchPredictionBoolean),
    .regEqual (regEqual),
@@ -220,7 +235,8 @@ control_unit control_unit(
    .mem_2_reg(ID_mem_2_reg),
    .mem_write(ID_memwrite),
    .alu_src  (ID_alusrc),
-   .reg_write(ID_regwrite),
+   .reg_write_1(ID_regwrite),
+   .reg_write_2(ID_regwrite_2),
    .jump     (ID_jump),
    .flush    (flush)
 );
@@ -240,25 +256,32 @@ branch_unit#(
 register_file #(
    .DATA_W(64)
 ) register_file(
-   .clk      (clk               ),
-   .arst_n   (arst_n            ),
-   .reg_write_1 (WB_WB[1]         ),
-   .reg_write_2 (1'b0),
+   .clk      (clk),
+   .arst_n   (arst_n),
+   .reg_write_1 (WB_WB[1]),
+   .reg_write_2 (WB_regwrite_2),
    .raddr_1  (ID_INST[19:15]),
    .raddr_2  (ID_INST[24:20]),
-   .raddr_3  (5'b0),
-   .waddr_1    (WB_wb_reg ),
-   .waddr_2    (5'b0),
+   .raddr_3  (ID_INST_2[19:15]),
+   .waddr_1    (WB_wb_reg),
+   .waddr_2    (WB_wb_reg_2),
    .wdata_1    (WB_regfile_wdata),
-   .wdata_2    (64'b0),
+   .wdata_2    (WB_alu_out_2),
    .rdata_1  (ID_regfile_rdata_1),
-   .rdata_2  (ID_regfile_rdata_2) // rdata_3 here as well
+   .rdata_2  (ID_regfile_rdata_2),
+   .rdata_3  (ID_regfile_rdata_3)
 );
 
-immediate_extend_unit immediate_extend_u(
+immediate_extend_unit immediate_extend_u1(
     .instruction         (ID_INST),
     .immediate_extended  (ID_immediate_extended)
 );
+
+immediate_extend_unit immediate_extend_u2( // For the addi pipeline
+    .instruction         (ID_INST_2),
+    .immediate_extended  (ID_immediate_extended_2)
+);
+
 
 mux_2 #(
    .DATA_W(2)
@@ -398,7 +421,54 @@ reg_arstn_en#( // RF Address 2
       .dout  (EX_Rs2)
    );
 
+reg_arstn_en#( // WB address addi pipeline
+      .DATA_W(5)
+   ) ID_EX_FF13(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (ID_INST_2[11:7]),
+      .en    (enable    ),
+      .dout  (EX_wb_reg_2)
+   );
+
+reg_arstn_en#( // regwrite addi pipeline
+      .DATA_W(1)
+   ) ID_EX_FF14(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (ID_regwrite_2),
+      .en    (enable    ),
+      .dout  (EX_regwrite_2)
+   );
+
+reg_arstn_en#( // Operand 1 for addi pipeline
+      .DATA_W(64)
+   ) ID_EX_FF15(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (ID_regfile_rdata_3),
+      .en    (enable    ),
+      .dout  (EX_rd3)
+   );
+
+reg_arstn_en#( // Operand 1 for addi pipeline
+      .DATA_W(64)
+   ) ID_EX_FF16(
+      .clk   (clk       ),
+      .arst_n(arst_n    ),
+      .din   (ID_immediate_extended_2),
+      .en    (enable    ),
+      .dout  (EX_immediate_2)
+   );
+
+
 // --------------------- EX Stage --------------
+
+imm_alu #(.DATA_W(64)) issue2_alu(
+   .alu_in_0 (EX_rd3),
+   .alu_in_1 (EX_immediate_2),
+   .alu_out  (EX_alu_out_2)
+);
 
 alu_control alu_ctrl(
    .func7       (EX_func73[9:3]),
@@ -545,6 +615,37 @@ reg_arstn_en#( // RF Address 2
       .en    (enable),
       .dout  (MEM_Rs2)
    );
+
+reg_arstn_en#( // wb address addi pipeline
+      .DATA_W(5)
+   ) EX_MEM_FF10(
+      .clk   (clk),
+      .arst_n(arst_n),
+      .din   (EX_wb_reg_2),
+      .en    (enable),
+      .dout  (WB_wb_reg_2)
+   );
+
+reg_arstn_en#( // wb address addi pipeline
+      .DATA_W(64)
+   ) EX_MEM_FF11(
+      .clk   (clk),
+      .arst_n(arst_n),
+      .din   (EX_alu_out_2),
+      .en    (enable),
+      .dout  (WB_alu_out_2)
+   );
+
+reg_arstn_en#( // wb address addi pipeline
+      .DATA_W(1)
+   ) EX_MEM_FF12(
+      .clk   (clk),
+      .arst_n(arst_n),
+      .din   (EX_regwrite_2),
+      .en    (enable),
+      .dout  (WB_regwrite_2)
+   );
+
 
 // --------------------- Mem Stage --------------
 

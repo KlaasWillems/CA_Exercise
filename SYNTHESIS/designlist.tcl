@@ -19,4 +19,5 @@ set verilog_files { \
    hazardDetection
    forwardingUnit
    reg_arstn_en_with_reset
+   imm_alu
 }
