@@ -20,9 +20,9 @@ reg [63:0] BranchPCTable [0:N_REG-1]; // Contains the PC of the branches
 reg [1:0] BPT [0:N_REG-1]; // Contains the predictions
 reg [0:N_REG-1] validTable; // Contains the valid bits
 
-wire [N_BITS-1:0] BPTReadAddress, BPTWriteAddress;
-assign BPTReadAddress = IF_PC[1+N_BITS:2]; // 'address' of instruction in IF stage
-assign BPTWriteAddress = BPTReadAddress - 1; // 'address' of instruction in ID stage
+wire [N_BITS-1:0] BPTReadAddress;
+reg [N_BITS-1:0] BPTWriteAddress;
+assign BPTReadAddress = IF_PC[1+N_BITS:3]; // 'address' of instruction in IF stage
 
 // --------- Read procesess --------- (IF Stage)
 assign predictedBranchPC = BranchPCTable[BPTReadAddress];
@@ -37,6 +37,11 @@ always @(*) begin
 end
 
 // --------- Write procesess --------- (ID Stage)
+
+// update write address process
+always @(posedge clk) begin
+	BPTWriteAddress <= BPTReadAddress;
+end
 
 // BranchPCTable write process
 always@(posedge clk, negedge arst_n) begin
