@@ -2,7 +2,7 @@
 // Function: Generates the control signals for each one of the datapath resources
 
 module control_unit(
-      input wire opcode_2, // for the second issue (addi instructions)
+      input wire [6:0] opcode_2, // for the second issue (addi instructions)
       input wire [6:0] opcode_1,
       input wire [2:0] func3,
       input wire branchTaken,
@@ -36,9 +36,9 @@ module control_unit(
 
    // addi second issue
    always @(*) begin
-      case(opcode_2):
-         default: reg_write_2 = 1'b0;
-         ALU_I: reg_write_2 = 1'b1;
+      case(opcode_2)
+	ALU_I: reg_write_2 = 1'b1;
+	default: reg_write_2 = 1'b0;
       endcase
    end
 

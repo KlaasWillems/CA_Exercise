@@ -174,7 +174,7 @@ reg_arstn_en_with_reset#(
    );
 reg_arstn_en_with_reset#(
       .DATA_W(32)
-   ) IF_ID_FF2(
+   ) IF_ID_FF3(
       .clk   (clk       ),
       .reset (flush),
       .arst_n(arst_n    ),
@@ -184,7 +184,7 @@ reg_arstn_en_with_reset#(
    );
 reg_arstn_en_with_reset#(
       .DATA_W(1)
-   ) IF_ID_FF3(
+   ) IF_ID_FF4(
       .clk   (clk),
       .reset (flush),
       .arst_n(arst_n),
@@ -224,7 +224,7 @@ hazardDetection hazardDetectionModule(
 );
 
 control_unit control_unit(
-   .opcode_2   (ID_INST_2[6:0])
+   .opcode_2   (ID_INST_2[6:0]),
    .opcode_1   (ID_INST[6:0]),
    .func3 (ID_INST[14:12]),
    .branchTaken (ID_branchPredictionBoolean),
