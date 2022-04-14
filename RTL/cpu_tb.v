@@ -6,12 +6,12 @@ reg          arst_n;
 reg  [63:0]  addr_ext;
 reg          wen_ext;
 reg          ren_ext;
-reg  [31:0]  wdata_ext;
+reg  [63:0]  wdata_ext;
 reg  [63:0]  addr_ext_2;
 reg          wen_ext_2;
 reg          ren_ext_2;
 reg  [63:0]  wdata_ext_2;
-wire [31:0]  rdata_ext;
+wire [63:0]  rdata_ext;
 wire [63:0]  rdata_ext_2;
 reg          enable;
 
@@ -20,7 +20,7 @@ integer imem_cnt, dmem_cnt;
 parameter integer IMEM_SIZE = 2**9;
 parameter integer DMEM_SIZE = 2**10;
 
-reg [31:0] instr_mem [0:IMEM_SIZE-1];
+reg [63:0] instr_mem [0:IMEM_SIZE-1];
 reg [63:0] data_mem [0:DMEM_SIZE-1];
 integer counter;
 
@@ -68,7 +68,7 @@ cpu dut(
    .addr_ext    (addr_ext   ),
    .wen_ext     (wen_ext    ),
    .ren_ext     (ren_ext    ),
-   .wdata_ext   (wdata_ext  ),
+   .wdata_ext   (wdata_ext  ), // change
    .addr_ext_2  (addr_ext_2 ),
    .wen_ext_2   (wen_ext_2  ),
    .ren_ext_2   (ren_ext_2  ),
