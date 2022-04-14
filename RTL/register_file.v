@@ -24,7 +24,7 @@ module register_file#(
       input  wire [       4:0] waddr_1,
       input  wire [       4:0] waddr_2,
       input  wire [DATA_W-1:0] wdata_1,
-      input  wire [DATA_1-1:0] wdata_2,
+      input  wire [DATA_W-1:0] wdata_2,
       output reg  [DATA_W-1:0] rdata_1,
       output reg  [DATA_W-1:0] rdata_2,
       output reg  [DATA_W-1:0] rdata_3

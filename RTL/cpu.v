@@ -240,7 +240,7 @@ register_file #(
    .clk      (clk               ),
    .arst_n   (arst_n            ),
    .reg_write_1 (WB_WB[1]         ),
-   .reg_Write_2 (1'b0),
+   .reg_write_2 (1'b0),
    .raddr_1  (ID_INST[19:15]),
    .raddr_2  (ID_INST[24:20]),
    .raddr_3  (5'b0),
