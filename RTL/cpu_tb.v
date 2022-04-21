@@ -10,9 +10,9 @@ reg  [31:0]  wdata_ext;
 reg  [63:0]  addr_ext_2;
 reg          wen_ext_2;
 reg          ren_ext_2;
-reg  [31:0]  wdata_ext_2;
+reg  [63:0]  wdata_ext_2;
 wire [31:0]  rdata_ext;
-wire [31:0]  rdata_ext_2;
+wire [63:0]  rdata_ext_2;
 reg          enable;
 
 integer half_clock_period_ns = 50;

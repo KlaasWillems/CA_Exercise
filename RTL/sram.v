@@ -58,7 +58,7 @@ reg wen_n, wen_ext_n;
 
 // Additional signals for multiple issue cpu
 wire [63:0] addr_temp; 
-assign addr_temp = ren_ext ? addr_ext : addr + 64'd4; // either external read or the read for the second instruction
+assign addr_temp = wen_ext ? addr_ext : addr + 64'd4; // either external read or the read for the second instruction
 
 always@(*)begin
    rdata     = data_i    [mem_sel][DATA_W-1:0];

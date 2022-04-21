@@ -32,10 +32,10 @@ module cpu(
 		input  wire	[63:0]  addr_ext_2,
 		input  wire         wen_ext_2,
 		input  wire         ren_ext_2,
-		input  wire [31:0]  wdata_ext_2,
+		input  wire [63:0]  wdata_ext_2,
 		
 		output wire [31:0] rdata_ext, 
-		output wire	[31:0] rdata_ext_2
+		output wire [63:0] rdata_ext_2
 
    );
 
@@ -135,7 +135,7 @@ pc #(
 // The instruction memory.
 sram_BW32 #(
    .ADDR_W(9 ),
-   .DATA_W(64)
+   .DATA_W(32)
 ) instruction_memory(
    .clk      (clk           ),
    .addr     (IF_PC         ),
