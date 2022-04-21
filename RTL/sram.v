@@ -37,7 +37,8 @@ module sram_BW32#(
 		input wire 	[DATA_W-1:0] wdata,
 		input wire 	[DATA_W-1:0] wdata_ext,
 		output reg	[DATA_W-1:0] rdata,
-		output reg	[DATA_W-1:0] rdata_ext
+		output reg	[DATA_W-1:0] rdata_ext,
+      output reg  [DATA_W-1:0] rdata_nxt
 
    );
 parameter integer SEL_W       = ADDR_W-7;
@@ -55,19 +56,24 @@ reg              cs_ext_i   [0:(2**SEL_W)-1];
  
 reg wen_n, wen_ext_n;
 
+// Additional signals for multiple issue cpu
+wire [63:0] addr_temp; 
+assign addr_temp = ren_ext ? addr_ext : addr + 64'd4; // either external read or the read for the second instruction
+
 always@(*)begin
    rdata     = data_i    [mem_sel][DATA_W-1:0];
    rdata_ext = data_ext_i[mem_sel_ext][DATA_W-1:0]; 
+   rdata_nxt = data_ext_i[mem_sel_ext][DATA_W-1:0]; 
 end 
 
 
 always@(*)begin
-   addr_i      = addr    [8:2];
-   addr_ext_i  = addr_ext[8:2];
+   addr_i      = addr    [8:2]; 
+   addr_ext_i  = addr_temp[8:2]; 
    wen_n       = ~wen;
    wen_ext_n   = ~wen_ext;
    mem_sel     = addr    [ADDR_W-1+2:ADDR_W-SEL_W+2];
-   mem_sel_ext = addr_ext[ADDR_W-1+2:ADDR_W-SEL_W+2];
+   mem_sel_ext = addr_temp[ADDR_W-1+2:ADDR_W-SEL_W+2];
 end
 
 genvar index_depth;

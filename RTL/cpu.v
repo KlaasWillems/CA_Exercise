@@ -28,14 +28,14 @@ module cpu(
 		input  wire	[63:0]  addr_ext,
 		input  wire         wen_ext,
 		input  wire         ren_ext,
-		input  wire [63:0] wdata_ext, 
+		input  wire [31:0] wdata_ext, 
 		input  wire	[63:0]  addr_ext_2,
 		input  wire         wen_ext_2,
 		input  wire         ren_ext_2,
-		input  wire [63:0]  wdata_ext_2,
+		input  wire [31:0]  wdata_ext_2,
 		
-		output wire [63:0] rdata_ext, 
-		output wire	[63:0] rdata_ext_2
+		output wire [31:0] rdata_ext, 
+		output wire	[31:0] rdata_ext_2
 
    );
 
@@ -88,7 +88,7 @@ wire [9:0] ID_func73 = {ID_INST[31:25], ID_INST[14:12]};
 
 // IF Signals
 wire [31:0] instruction;
-wire [63:0] IF_updated_pc, IF_PC, instruction64;
+wire [63:0] IF_updated_pc, IF_PC;
 
 // Issue 2 signals (addi pipeline)
 wire ID_regwrite_2, EX_regwrite_2, WB_regwrite_2;
@@ -101,9 +101,6 @@ wire [4:0] EX_wb_reg_2, WB_wb_reg_2;
 assign hazardEnable = enable & !hazardBoolean; // Stall
 assign notFlushed = !flush;
 assign regEqual = ID_operand1 == ID_operand2;
-
-assign instruction = instruction64[31:0];
-assign instruction_2 = instruction64[63:32];
 
 // --------------------- IF Stage ---------------------
 
@@ -136,21 +133,22 @@ pc #(
 );
 
 // The instruction memory.
-sram_BW64 #(
+sram_BW32 #(
    .ADDR_W(9 ),
    .DATA_W(64)
 ) instruction_memory(
    .clk      (clk           ),
-   .addr     (IF_PC    ),
+   .addr     (IF_PC         ),
    .wen      (1'b0          ),
    .ren      (1'b1          ),
-   .wdata    (64'b0         ),
-   .rdata    (instruction64 ),
    .addr_ext (addr_ext      ), 
    .wen_ext  (wen_ext       ), 
    .ren_ext  (ren_ext       ),
+   .wdata    (32'b0         ),
+   .rdata    (instruction   ),
    .wdata_ext(wdata_ext     ),
-   .rdata_ext(rdata_ext     ) 
+   .rdata_ext(rdata_ext     ), 
+   .rdata_nxt(instruction_2 ) 
 );
 
 reg_arstn_en#(
